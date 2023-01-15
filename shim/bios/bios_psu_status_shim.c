@@ -86,7 +86,7 @@ int unregister_bios_psu_status_shim(void)
     }
     HWMONGetPSUStatusByI2C_ovs = NULL;
     RS4021xspI2CGetPowerInfo_ovs = NULL;
-    FS2500I2CGetPowerInfo_ovs = NULL:
+    FS2500I2CGetPowerInfo_ovs = NULL;
 
     shim_ureg_ok();
     return 0;

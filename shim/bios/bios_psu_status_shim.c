@@ -97,7 +97,7 @@ int unregister_bios_psu_status_shim(void)
     RS4021xspI2CGetPowerInfo_ovs = NULL;
     FS2500I2CGetPowerInfo_ovs = NULL;
 
-    int outfs2500 = restore_symbol(SA3600I2CGetPowerInfo_ovs);
+    int outsa3600 = restore_symbol(SA3600I2CGetPowerInfo_ovs);
     if (unlikely(outsa3600 != 0)) {
         pr_loc_err("Failed to restore SA3600I2CGetPowerInfo - error=%d", out);
         return out;

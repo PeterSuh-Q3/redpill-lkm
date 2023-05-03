@@ -427,11 +427,11 @@ const struct hw_config supported_platforms[] = {
             { .type = __VPD_TERMINATOR__ }
         },
         .emulate_rtc = false,
-        .swap_serial = false,
+        .swap_serial = true,
         .reinit_ttyS0 = true,
         .fix_disk_led_ctrl = false,
         .has_cpu_temp = true,
-        .is_dt = false,
+        .is_dt = true,
         .hwmon = {
             .sys_thermal = { HWMON_SYS_TZONE_REMOTE1_ID, HWMON_SYS_TZONE_LOCAL_ID, HWMON_SYS_TZONE_REMOTE2_ID },
             .sys_voltage = { HWMON_SYS_VSENS_VCC_ID, HWMON_SYS_VSENS_VPP_ID, HWMON_SYS_VSENS_V33_ID,

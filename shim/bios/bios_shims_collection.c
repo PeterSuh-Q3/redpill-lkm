@@ -25,7 +25,6 @@ static int bios_get_power_status(POWER_INFO *power)
     return 0;
 }
 
-
 static int shim_get_gpio_pin_usable(int *pin)
 {
     pin[1] = 0;

@@ -56,6 +56,7 @@
 #include "bios/bios_shims_collection.h" //shim_bios_module(), unshim_bios_module(), shim_bios_disk_leds_ctrl()
 #include "bios/bios_hwcap_shim.h" //register_bios_hwcap_shim(), unregister_bios_hwcap_shim(), reset_bios_hwcap_shim()
 #include "bios/bios_psu_status_shim.h" //register_bios_psu_status_shim(), unregister_bios_psu_status_shim(), reset_bios_psu_status_shim()
+#include <linux/elf.h>
 #include <linux/notifier.h> //module notification
 #include <linux/module.h> //struct module
 
@@ -127,7 +128,7 @@ static int bios_module_notifier_handler(struct notifier_block * self, unsigned l
         bios_shimmed = true;
         pr_loc_inf("%s BIOS *fully* shimmed", mod->name);
     } else { //MODULE_STATE_COMING or MODULE_STATE_UNFORMED [but most likely actually MODULE_STATE_COMING]
-        if (likely(state == MODULE_STATE_COMING)){
+        if (likely(state == MODULE_STATE_COMING)) {
             register_bios_hwcap_shim(hw_config);
             register_bios_psu_status_shim(hw_config);
         }
@@ -344,9 +345,16 @@ static int _apply_relocate_add(Elf64_Shdr *sechdrs, const char *strtab, unsigned
                 goto overflow;
                 break;
             case R_X86_64_PC32:
+            case R_X86_64_PLT32:
                 val -= (u64)loc;
                 *(u32 *)loc = val;
                 break;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,20,0)
+            case R_X86_64_PC64:
+                val -= (u64)loc;
+                *(u64 *)loc = val;
+                break;
+#endif
             default:
                 pr_err("%s: Unknown rela relocation: %llu\n",
                        me->name, ELF64_R_TYPE(rel[i].r_info));

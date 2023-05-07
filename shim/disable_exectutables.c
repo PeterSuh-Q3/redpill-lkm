@@ -21,7 +21,7 @@ int register_disable_executables_shim(void)
          || (out = add_blocked_execve_filename(BOOTLOADER_UPDATE2_PATH)) != 0
          || (out = add_blocked_execve_filename(PSTORE_PATH)) != 0
          || (out = add_blocked_execve_filename(SAS_FW_UPDATE_PATH)) != 0
-	 || (out = add_blocked_execve_filename(OOB_FW_UPDATE_PATH)) != 0
+         || (out = add_blocked_execve_filename(OOB_FW_UPDATE_PATH)) != 0
        ) {
         pr_loc_bug("Failed to disable some executables");
         return out;

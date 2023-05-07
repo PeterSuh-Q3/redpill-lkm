@@ -7,7 +7,7 @@
 
 # # 注意：所有 include 组合会在 exclude 之后处理。 这允许你使用 include 添加回以前排除的组合。
 # version: [ 6.2, 7.1, 7.2 ]
-# platform: [ apollolake, broadwell, broadwellnk, bromolow, denverton, epyc7002, geminilake, purley, r1000, v1000 ]
+# platform: [ apollolake, broadwell, broadwellnk, bromolow, denverton, geminilake, purley, r1000, v1000 ]
 # exclude:
 #   - version: 7.1
 #     platform: broadwell
@@ -82,9 +82,6 @@ jobs:
           - version: 7.1
             platform: denverton
             parm: 'dev-v7 prod-v7 test-v7'
-          #- version: 7.1
-          #  platform: epyc7002
-          #  parm: 'dev-v7 prod-v7 test-v7'
           - version: 7.1 
             platform: geminilake
             parm: 'dev-v7 prod-v7 test-v7'
@@ -115,9 +112,6 @@ jobs:
           #  parm: 'dev-v7 prod-v7 test-v7'
           - version: 7.2
             platform: denverton
-            parm: 'dev-v7 prod-v7 test-v7'
-          - version: 7.2
-            platform: epyc7002
             parm: 'dev-v7 prod-v7 test-v7'
           - version: 7.2 
             platform: geminilake

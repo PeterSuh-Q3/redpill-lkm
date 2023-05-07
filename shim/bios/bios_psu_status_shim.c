@@ -15,7 +15,7 @@ static const struct hw_config *hw_config = NULL;
 static override_symbol_inst *HWMONGetPSUStatusByI2C_ovs = NULL;
 static override_symbol_inst *RS4021xspI2CGetPowerInfo_ovs = NULL;
 static override_symbol_inst *FS2500I2CGetPowerInfo_ovs = NULL;
-static override_symbol_inst *SA3600I2CGetPowerInfo_ovs = NULL;
+static override_symbol_inst *SA6400I2CGetPowerInfo_ovs = NULL;
 
 static int HWMONGetPSUStatusByI2C_shim(void)
 {
@@ -32,7 +32,7 @@ static int FS2500I2CGetPowerInfo_shim(void)
     return 1;
 }
 
-static int SA3600I2CGetPowerInfo_shim(void)
+static int SA6400I2CGetPowerInfo_shim(void)
 {
     return 1;
 }
@@ -47,14 +47,14 @@ int register_bios_psu_status_shim(const struct hw_config *hw)
         shim_reg_already();
     if (unlikely(FS2500I2CGetPowerInfo_ovs))
         shim_reg_already();
-    if (unlikely(SA3600I2CGetPowerInfo_ovs))
+    if (unlikely(SA6400I2CGetPowerInfo_ovs))
         shim_reg_already();
 
     hw_config = hw;
     override_symbol_or_exit_int(HWMONGetPSUStatusByI2C_ovs, "HWMONGetPSUStatusByI2C", HWMONGetPSUStatusByI2C_shim);
     override_symbol_or_exit_int(RS4021xspI2CGetPowerInfo_ovs, "RS4021xspI2CGetPowerInfo_ovs", RS4021xspI2CGetPowerInfo_shim);
     override_symbol_or_exit_int(FS2500I2CGetPowerInfo_ovs, "FS2500I2CGetPowerInfo_ovs", FS2500I2CGetPowerInfo_shim);    
-    override_symbol_or_exit_int(SA3600I2CGetPowerInfo_ovs, "SA3600I2CGetPowerInfo_ovs", SA3600I2CGetPowerInfo_shim);    
+    override_symbol_or_exit_int(SA6400I2CGetPowerInfo_ovs, "SA6400I2CGetPowerInfo_ovs", SA6400I2CGetPowerInfo_shim);    
 
     shim_reg_ok();
     return 0;
@@ -70,7 +70,7 @@ int unregister_bios_psu_status_shim(void)
         return 0; //this is deliberately a noop
     if (unlikely(!FS2500I2CGetPowerInfo_ovs))
         return 0; //this is deliberately a noop
-    if (unlikely(!SA3600I2CGetPowerInfo_ovs))
+    if (unlikely(!SA6400I2CGetPowerInfo_ovs))
         return 0; //this is deliberately a noop
 
     int out = restore_symbol(HWMONGetPSUStatusByI2C_ovs);
@@ -97,15 +97,15 @@ int unregister_bios_psu_status_shim(void)
     RS4021xspI2CGetPowerInfo_ovs = NULL;
     FS2500I2CGetPowerInfo_ovs = NULL;
 
-    int outsa3600 = restore_symbol(SA3600I2CGetPowerInfo_ovs);
-    if (unlikely(outsa3600 != 0)) {
-        pr_loc_err("Failed to restore SA3600I2CGetPowerInfo - error=%d", out);
+    int outsa6400 = restore_symbol(SA6400I2CGetPowerInfo_ovs);
+    if (unlikely(outsa6400 != 0)) {
+        pr_loc_err("Failed to restore SA6400I2CGetPowerInfo - error=%d", out);
         return out;
     }
     HWMONGetPSUStatusByI2C_ovs = NULL;
     RS4021xspI2CGetPowerInfo_ovs = NULL;
     FS2500I2CGetPowerInfo_ovs = NULL;
-    SA3600I2CGetPowerInfo_ovs = NULL;
+    SA6400I2CGetPowerInfo_ovs = NULL;
     
     shim_ureg_ok();
     return 0;
@@ -123,8 +123,8 @@ int reset_bios_psu_status_shim(void)
     put_overridden_symbol(FS2500I2CGetPowerInfo_ovs);
     FS2500I2CGetPowerInfo_ovs = NULL;
 
-    put_overridden_symbol(SA3600I2CGetPowerInfo_ovs);
-    SA3600I2CGetPowerInfo_ovs = NULL;
+    put_overridden_symbol(SA6400I2CGetPowerInfo_ovs);
+    SA6400I2CGetPowerInfo_ovs = NULL;
     
     shim_reset_ok();
     return 0;

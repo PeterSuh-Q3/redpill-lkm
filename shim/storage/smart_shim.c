@@ -86,7 +86,6 @@
 #include "../../internal/scsi/hdparam.h" //a ton of ATA constants
 #include "../../internal/scsi/scsi_toolbox.h" //checking for "sd" driver load state
 #include "../../internal/override/override_symbol.h" //installing sd_ioctl_canary()
-#include "scsi_disk_serial.h" // rp_fetch_block_serial()
 #include <linux/fs.h> //struct block_device
 #include <linux/genhd.h> //struct gendisk
 #include <linux/blkdev.h> //struct block_device_operations
@@ -541,6 +540,7 @@ static int populate_win_smart_log(const u8 *req_header, void __user *buff_ptr)
             smart_log[0] = WIN_SMART_DIG_LOG_VERSION;
             //if every other byte is zero we can ignore the rest of the fields according to Table 63. We also SHOULD NOT
             // generate a checksum for log directory (despite all others using checksums...)
+            break;// TODO check
 
         case 0x01: //summary SMART error log (see sect. 8.55.6.8.2 Summary error log sector)
             smart_log[0] = WIN_SMART_SUM_LOG_VERSION;
@@ -695,19 +695,7 @@ static int handle_hdio_drive_cmd_ioctl(struct block_device *bdev, fmode_t mode, 
         // we need to modify it to indicate SMART support
         case ATA_CMD_ID_ATA:
             pr_loc_dbg_ioctl(cmd, "ATA_CMD_ID_ATA", bdev);
-
-            // TODO for some disks from HBA, we can get smart info from SG_IO,
-            // but for SA6400, DSM only fetch ATA smart info,
-            // we need convert SG_IO smart info into ATA format instead of fake it.
-
-            // use the real serial if it's not empty, other wise use the disk name
-            char * disk_serial;
-            disk_serial = rp_fetch_block_serial(bdev->bd_disk->disk_name);
-            if (disk_serial == NULL || strlen(disk_serial) < 3) {
-                disk_serial = bdev->bd_disk->disk_name;
-            }
-
-            return handle_ata_cmd_identify(ioctl_out, req_header, buff_ptr, disk_serial);
+            return handle_ata_cmd_identify(ioctl_out, req_header, buff_ptr, bdev->bd_disk->disk_name);
 
         //this command asks directly for the SMART data of the drive and will fail on drives with no real SMART support
         case ATA_CMD_SMART: //if the drive supports SMART it will just return the data as-is, no need to proxy

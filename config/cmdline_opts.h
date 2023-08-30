@@ -40,5 +40,9 @@
 #define CMDLINE_KT_MAC2      "mac2="
 #define CMDLINE_KT_MAC3      "mac3="
 #define CMDLINE_KT_MAC4      "mac4="
+#define CMDLINE_KT_MAC5      "mac5="
+#define CMDLINE_KT_MAC6      "mac6="
+#define CMDLINE_KT_MAC7      "mac7="
+#define CMDLINE_KT_MAC8      "mac8="
 
 #endif //REDPILL_CMDLINE_OPTS_H

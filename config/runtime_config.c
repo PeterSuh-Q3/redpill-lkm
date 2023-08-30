@@ -135,7 +135,7 @@ static inline bool validate_nets(const unsigned short if_num, mac_address * cons
 
     if (macs_num == 0) {
         pr_loc_wrn("No MAC addressed are specified - use \"%s\" or \"%s\"...\"%s\" to set them", CMDLINE_KT_MACS,
-                   CMDLINE_KT_MAC1, CMDLINE_KT_MAC4);
+                   CMDLINE_KT_MAC1, CMDLINE_KT_MAC8);
     }
 
     if (if_num != macs_num) {

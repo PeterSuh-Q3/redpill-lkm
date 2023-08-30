@@ -718,9 +718,9 @@ const struct hw_config supported_platforms[] = {
         .pci_stubs = {
             { .type = __VPD_TERMINATOR__ }
         },
-        .emulate_rtc = false,
+        .emulate_rtc = true,
         .swap_serial = false,
-        .reinit_ttyS0 = true,
+        .reinit_ttyS0 = false,
         .fix_disk_led_ctrl = true,
         .has_cpu_temp = true,
         .is_dt = true,

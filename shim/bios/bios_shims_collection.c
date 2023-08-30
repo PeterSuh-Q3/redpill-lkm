@@ -18,13 +18,6 @@
 static unsigned long org_shimmed_entries[VTK_SIZE] = { '\0' }; //original entries which were shimmed by custom entries
 static unsigned long cust_shimmed_entries[VTK_SIZE] = { '\0' }; //custom entries which were set as shims
 
-static int bios_get_power_status(POWER_INFO *power)
-{
-    power->power_1 = POWER_STATUS_GOOD;
-    power->power_2 = POWER_STATUS_GOOD;
-    return 0;
-}
-
 static int shim_get_gpio_pin_usable(int *pin)
 {
     pin[1] = 0;
@@ -43,6 +36,13 @@ static int shim_set_gpio_pin_usable(int *pin)
 static int bios_get_buz_clr(unsigned char *state)
 {
     *state = 0;
+    return 0;
+}
+
+static int bios_get_power_status(POWER_INFO *power)
+{
+    power->power_1 = POWER_STATUS_GOOD;
+    power->power_2 = POWER_STATUS_GOOD;
     return 0;
 }
 
@@ -105,12 +105,11 @@ static void print_debug_symbols(const unsigned long *vtable_end)
 
     unsigned long *call_ptr = vtable_start;
     unsigned char *byte_ptr = (char *)vtable_start;
-    for (int i = 0; i < im; i++, byte_ptr++) {
-        pr_loc_dbg_raw("%02x ", *byte_ptr);
-        if ((i+1) % 8 == 0) {
-            pr_loc_dbg_raw(" [%02d] 0x%03x \t%p\t%pS\n", i / 8, i-7, (void *) (*call_ptr), (void *) (*call_ptr));
-            call_ptr++;
-        }
+    for (int i = 0; i < im; i+=8, byte_ptr+=8, call_ptr+=8) {
+        pr_loc_dbg_raw("%02x %02x %02x %02x %02x %02x %02x %02x ",
+          *byte_ptr, *byte_ptr+1, *byte_ptr+2, *byte_ptr+3,
+          *byte_ptr+4, *byte_ptr+5, *byte_ptr+6, *byte_ptr+7);
+        pr_loc_dbg_raw("[%02d] 0x%03x \t%p\t%pS\n", i/8, i-7, (void *) (*call_ptr), (void *) (*call_ptr));
     }
     pr_loc_dbg_raw("\n");
 

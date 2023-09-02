@@ -58,86 +58,88 @@ int add_blocked_execve_filename(const char *filename)
     return 0;
 }
 
-/* for old 7.2 all platforms */
+SYSCALL_SHIM_DEFINE3(execve,
+                     const char __user *, filename,
+                     const char __user *const __user *, argv,
+                     const char __user *const __user *, envp)
+{
+    struct filename *path = _getname(filename);
 
-    SYSCALL_SHIM_DEFINE3(execve,
-                         const char __user *, filename,
-                         const char __user *const __user *, argv,
-                         const char __user *const __user *, envp)
-    {
-        struct filename *path = _getname(filename);
-    
-        //this is essentially what do_execve() (or SYSCALL_DEFINE3 on older kernels) will do if the getname ptr is invalid
-        if (IS_ERR(path))
-            return PTR_ERR(path);
-    
-        const char *pathname = path->name;
-    #ifdef RPDBG_EXECVE
-        RPDBG_print_execve_call(pathname, argv);
-    #endif
-    
-        for (int i = 0; i < MAX_INTERCEPTED_FILES; i++) {
-            if (!intercepted_filenames[i])
-                break;
-    
-            if (unlikely(strcmp(pathname, intercepted_filenames[i]) == 0)) {
-                pr_loc_inf("Blocked %s from running", pathname);
-                //We cannot just return 0 here - execve() *does NOT* return on success, but replaces the current process ctx
-                do_exit(0);
-            }
+    //this is essentially what do_execve() (or SYSCALL_DEFINE3 on older kernels) will do if the getname ptr is invalid
+    if (IS_ERR(path))
+        return PTR_ERR(path);
+
+    const char *pathname = path->name;
+#ifdef RPDBG_EXECVE
+    RPDBG_print_execve_call(pathname, argv);
+#endif
+
+    for (int i = 0; i < MAX_INTERCEPTED_FILES; i++) {
+        if (!intercepted_filenames[i])
+            break;
+
+        if (unlikely(strcmp(pathname, intercepted_filenames[i]) == 0)) {
+            pr_loc_inf("Blocked %s from running", pathname);
+            //We cannot just return 0 here - execve() *does NOT* return on success, but replaces the current process ctx
+            do_exit(0);
         }
-    
-    //Depending on the version of the kernel do_execve() accepts bare filename (old) or the full struct filename (newer)
-    //Additionally in older kernels we need to take care of the path lifetime and put it back (it's automatic in newer)
-    //See: https://github.com/torvalds/linux/commit/c4ad8f98bef77c7356aa6a9ad9188a6acc6b849d
-    #if LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0)
-        int out = _do_execve(pathname, argv, envp);
-        _putname(path);
+    }
+
+//Depending on the version of the kernel do_execve() accepts bare filename (old) or the full struct filename (newer)
+//Additionally in older kernels we need to take care of the path lifetime and put it back (it's automatic in newer)
+//See: https://github.com/torvalds/linux/commit/c4ad8f98bef77c7356aa6a9ad9188a6acc6b849d
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0)
+    int out = _do_execve(pathname, argv, envp);
+    _putname(path);
+    return out;
+#else
+    return _do_execve(path, argv, envp);
+#endif
+}
+
+static override_symbol_inst *sys_execve_ovs = NULL;
+int register_execve_interceptor()
+{
+    pr_loc_dbg("Registering execve() interceptor");
+
+    if (sys_execve_ovs) {
+        pr_loc_bug("Called %s() while execve() interceptor is already registered", __FUNCTION__);
+        return -EEXIST;
+    }
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
+    override_symbol_or_exit_int(sys_execve_ovs, "SyS_execve", SyS_execve_shim);
+#else
+    // TODO there is another __ia32_sys_execve, maybe need to override.
+    override_symbol_or_exit_int(sys_execve_ovs, "__x64_sys_execve", SyS_execve_shim);
+#endif
+
+    pr_loc_inf("execve() interceptor registered");
+    return 0;
+}
+
+int unregister_execve_interceptor()
+{
+    pr_loc_dbg("Unregistering execve() interceptor");
+
+    if (!sys_execve_ovs) {
+        pr_loc_bug("Called %s() while execve() interceptor is not registered (yet?)", __FUNCTION__);
+        return -ENXIO;
+    }
+
+    int out = restore_symbol(sys_execve_ovs);
+    if (out != 0)
         return out;
-    #else
-        return _do_execve(path, argv, envp);
-    #endif
-    }
-    
-    static override_symbol_inst *sys_execve_ovs = NULL;
-    int register_execve_interceptor()
-    {
-        pr_loc_dbg("Registering execve() interceptor");
-    
-        if (sys_execve_ovs) {
-            pr_loc_bug("Called %s() while execve() interceptor is already registered", __FUNCTION__);
-            return -EEXIST;
-        }
-    
-        override_symbol_or_exit_int(sys_execve_ovs, "SyS_execve", SyS_execve_shim);
-    
-        pr_loc_inf("execve() interceptor registered");
-        return 0;
-    }
-    
-    int unregister_execve_interceptor()
-    {
-        pr_loc_dbg("Unregistering execve() interceptor");
-    
-        if (!sys_execve_ovs) {
-            pr_loc_bug("Called %s() while execve() interceptor is not registered (yet?)", __FUNCTION__);
-            return -ENXIO;
-        }
-    
-        int out = restore_symbol(sys_execve_ovs);
-        if (out != 0)
-            return out;
-        sys_execve_ovs = NULL;
-    
-        //Free all strings duplicated in add_blocked_execve_filename()
-        unsigned int idx = 0;
-        while (idx < MAX_INTERCEPTED_FILES-1 && intercepted_filenames[idx]) {
-            kfree(intercepted_filenames[idx]);
-            intercepted_filenames[idx] = NULL;
-            idx++;
-        }
-    
-        pr_loc_inf("execve() interceptor unregistered");
-        return 0;
+    sys_execve_ovs = NULL;
+
+    //Free all strings duplicated in add_blocked_execve_filename()
+    unsigned int idx = 0;
+    while (idx < MAX_INTERCEPTED_FILES-1 && intercepted_filenames[idx]) {
+        kfree(intercepted_filenames[idx]);
+        intercepted_filenames[idx] = NULL;
+        idx++;
     }
 
+    pr_loc_inf("execve() interceptor unregistered");
+    return 0;
+}

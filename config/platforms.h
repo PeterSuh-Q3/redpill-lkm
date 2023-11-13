@@ -9,6 +9,27 @@
 #include "platform_types.h"
 const struct hw_config supported_platforms[] = {
     {
+        .name = "DS415Play",
+        .pci_stubs = {
+            { .type = VPD_MARVELL_88SE9235,    .bus = 0x01, .dev = 0x00, .fn = 0x00, .multifunction = false },
+            { .type = __VPD_TERMINATOR__ }
+        },
+        .emulate_rtc = true,
+        .swap_serial = false,
+        .reinit_ttyS0 = true,
+        .fix_disk_led_ctrl = true,
+        .has_cpu_temp = true,
+        .is_dt = false,
+        .hwmon = {
+            .sys_thermal = { HWMON_SYS_TZONE_NULL_ID },
+            .sys_voltage = { HWMON_SYS_VSENS_NULL_ID },
+            .sys_fan_speed_rpm = { HWMON_SYS_FAN_NULL_ID },
+            .hdd_backplane = { HWMON_SYS_HDD_BP_DETECT_ID, HWMON_SYS_HDD_BP_ENABLE_ID },
+            .psu_status = { HWMON_PSU_NULL_ID },
+            .sys_current = { HWMON_SYS_CURR_NULL_ID },
+        }
+    },
+    {
         .name = "DS916+",
         .pci_stubs = {
             { .type = __VPD_TERMINATOR__ }

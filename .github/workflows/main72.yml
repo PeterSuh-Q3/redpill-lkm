@@ -252,7 +252,7 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: rp-lkms
+          name: rp-lkms72
           path: |
             ${{ github.workspace }}/source/output/*
 
@@ -297,14 +297,14 @@ jobs:
         if: env.VERSION != ''
         uses: actions/download-artifact@v3
         with:
-          name: rp-lkms
-          path: ./rp-lkms
+          name: rp-lkms72
+          path: ./rp-lkms72
 
       - name: Zip lkms
         if: env.VERSION != ''
         run: |
-          echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
-          zip -9 rp-lkms72.zip -j rp-lkms/*
+          echo "${{ env.VERSION }}" > "rp-lkms72/VERSION"
+          zip -9 rp-lkms72.zip -j rp-lkms72/*
 
       - name: Release
         uses: softprops/action-gh-release@v1

@@ -67,9 +67,6 @@ jobs:
           - version: 7.1 
             platform: apollolake
             parm: 'prod-v7'
-          #- version: 7.1
-          #  platform: braswell
-          #  parm: 'prod-v7'
           - version: 7.1
             platform: broadwell
             parm: 'prod-v7'
@@ -77,29 +74,32 @@ jobs:
             platform: broadwellnk
             parm: 'prod-v7'
           #- version: 7.1 
-          #  platform: broadwellnkv2
+          #  platform: bromolow
           #  parm: 'prod-v7'
-          #- version: 7.1 
-          #  platform: broadwellntbap
-          #  parm: 'prod-v7'
-          - version: 7.1 
-            platform: bromolow
-            parm: 'prod-v7'
           - version: 7.1
             platform: denverton
             parm: 'prod-v7'
           - version: 7.1 
             platform: geminilake
             parm: 'prod-v7'
-          #- version: 7.1 
-          #  platform: purley
-          #  parm: 'prod-v7'
           - version: 7.1
             platform: r1000
             parm: 'prod-v7'
           - version: 7.1
             platform: v1000
             parm: 'prod-v7'
+          #- version: 7.1 
+          #  platform: purley
+          #  parm: 'prod-v7'
+          #- version: 7.1
+          #  platform: braswell
+          #  parm: 'prod-v7'
+          #- version: 7.1 
+          #  platform: broadwellnkv2
+          #  parm: 'prod-v7'
+          #- version: 7.1 
+          #  platform: broadwellntbap
+          #  parm: 'prod-v7'
 
           #- version: 7.2
           #  platform: apollolake
@@ -252,7 +252,7 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: rp-lkms
+          name: rp-lkms71
           path: |
             ${{ github.workspace }}/source/output/*
 
@@ -297,14 +297,14 @@ jobs:
         if: env.VERSION != ''
         uses: actions/download-artifact@v3
         with:
-          name: rp-lkms
-          path: ./rp-lkms
+          name: rp-lkms71
+          path: ./rp-lkms71
 
       - name: Zip lkms
         if: env.VERSION != ''
         run: |
-          echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
-          zip -9 rp-lkms71.zip -j rp-lkms/*
+          echo "${{ env.VERSION }}" > "rp-lkms71/VERSION"
+          zip -9 rp-lkms71.zip -j rp-lkms71/*
 
       - name: Release
         uses: softprops/action-gh-release@v1

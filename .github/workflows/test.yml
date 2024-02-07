@@ -36,8 +36,8 @@ jobs:
           #- version: 6.2 
           #  platform: evansport
           #  parm: 'prod-v6'        
-          - version: 7.1 
-            platform: apollolake 
+          - version: 7.2
+            platform: denverton 
             parm: 'prod-v7'
 
     runs-on: ubuntu-latest

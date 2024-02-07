@@ -73,12 +73,12 @@ jobs:
           - version: 7.1 
             platform: broadwellnk
             parm: 'prod-v7'
-          #- version: 7.1 
-          #  platform: bromolow
-          #  parm: 'prod-v7'
-          - version: 7.1
-            platform: denverton
+          - version: 7.1 
+            platform: bromolow
             parm: 'prod-v7'
+          #- version: 7.1
+          #  platform: denverton
+          #  parm: 'prod-v7'
           - version: 7.1 
             platform: geminilake
             parm: 'prod-v7'

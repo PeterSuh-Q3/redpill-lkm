@@ -33,37 +33,6 @@ jobs:
     strategy:
       matrix:
         include:
-          #- version: 6.2 
-          #  platform: apollolake
-          #  parm: 'prod-v6'
-          #- version: 6.2 
-          #  platform: braswell
-          #  parm: 'prod-v6'
-          #- version: 6.2 
-          #  platform: broadwell
-          #  parm: 'prod-v6'
-          #- version: 6.2 
-          #  platform: broadwellnk
-          #  parm: 'prod-v6'
-          #- version: 6.2 
-          #  platform: bromolow
-          #  parm: 'prod-v6'
-          #- version: 6.2 
-          #  platform: denverton
-          #  parm: 'prod-v6'
-          # checkout 6.2.4
-          #- version: 6.2 
-          #  platform: geminilake
-          #  parm: 'prod-v6'
-          # checkout 6.2.4
-          #- version: 6.2 
-          #  platform: purley
-          #  parm: 'prod-v6'
-          # checkout 6.2.4
-          #- version: 6.2 
-          #  platform: v1000 
-          #  parm: 'prod-v6'
-
           - version: 7.1 
             platform: apollolake
             parm: 'prod-v7'
@@ -132,9 +101,6 @@ jobs:
           #  platform: broadwellntbap
           #  parm: 'prod-v7'
           #- version: 7.2 
-          #  platform: bromolow
-          #  parm: 'prod-v7'
-          #- version: 7.2 
           #  platform: purley
           #  parm: 'prod-v7'
 
@@ -142,37 +108,29 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v3
 
       - name: Init Env
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          sudo timedatectl set-timezone "Asia/Shanghai" 
-          
-      # - name: Cache EnvDeploy
-      #   id: cache-env
-      #   uses: actions/cache@v3
-      #   env:
-      #     cache-name: cache-env
-      #   with:
-      #     path: |
-      #       ${{ github.workspace }}/pkgscripts-ng
-      #       ${{ github.workspace }}/build_env
-      #     key: ds.${{ matrix.platform }}-${{ matrix.version }}
+          sudo timedatectl set-timezone "Asia/Seoul"
           
       - name: Get EnvDeploy
-        # if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
         run: |
           ROOT_PATH=${{ github.workspace }}
 
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
-          #git clone https://github.com/PeterSuh-Q3/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
           # if version == 6.2, checkout 6.2.4
           git checkout DSM${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"`
           sudo ./EnvDeploy -v ${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"` -l  # Get Available platforms
           sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
+
+          # Fault tolerance of pkgscripts-ng
+          if [[ "${{ matrix.platform }}" == "broadwellntbap" && "${{ matrix.version }}" == "7.1" ]]; then
+            sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ROOT_PATH}/pkgscripts-ng/include/platforms
+          fi
 
           #ENV
           mkdir -p ${ROOT_PATH}/source
@@ -187,7 +145,7 @@ jobs:
           sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
           ./SynoBuild -c -p ${{ matrix.platform }}
 
-          while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
+          while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
           if [ -f "${KSRC}/Makefile" ]; then
             # gcc issue "unrecognized command-line option '--param=allow-store-data-races=0'".
             [ "${{ matrix.version }}" == "7.2" ] && sed -i 's/--param=allow-store-data-races=0/--allow-store-data-races/g' ${KSRC}/Makefile
@@ -202,7 +160,7 @@ jobs:
             [ -f "/env64.mak" ] && echo "CCVER=${CCVER}" >> /env64.mak
           fi
           EOF
-          
+
           [ -f ${ENV_PATH}/env64.mak ] && ENV_FILE=${ENV_PATH}/env64.mak || ([ -f ${ENV_PATH}/env32.mak ] && ENV_FILE=${ENV_PATH}/env32.mak)
           if [ -n "${ENV_FILE}" ]; then
             KVER=`grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}'`
@@ -211,23 +169,19 @@ jobs:
             [ -n "${CCVER}" ] && echo "CCVER=${CCVER}" >> $GITHUB_ENV
           fi
 
-      - name: Get Src
+      - name: Make LKMs
         run: |
-          ROOT_PATH=${{ github.workspace }}
-
-          mkdir -p ${ROOT_PATH}/source/output
-          repo=${{ github.server_url }}/${{ github.repository }}
-          git clone ${repo} ${ROOT_PATH}/source/input
-
-          sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
-
-      - name: Make lkms
-        run: |
-          ROOT_PATH=${{ github.workspace }}
-
           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
-          while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
+          while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
+          mkdir -p /source/output
+
+          repo=${{ github.server_url }}/${{ github.repository }}
+          # 5.10.55 Temporary use of https://github.com/XPEnology-Community/redpill-lkm5
+          # And currently only USB OK, @jim3ma is adapting to 7.2.
+          [ "${KVER:0:1}" = "5" ] && repo=https://github.com/AuxXxilium/redpill-lkm5
+
+          git clone -c http.sslVerify=false ${repo} /source/input
           cd /source/input
           [ -z "`grep 'env.mak' Makefile`" ] && sed -i '1 i include /env.mak' Makefile
           array=(${{ matrix.parm }})
@@ -238,7 +192,11 @@ jobs:
               strip -g redpill.ko    # Discard symbols from object files. 
               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
               gzip redpill.ko
-              mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+              if [ "${{ matrix.platform }}" = "epyc7002" ]; then
+                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+              else
+                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+              fi
             else
               echo "error"
             fi
@@ -247,6 +205,8 @@ jobs:
           ls -al /source/output
           EOF
 
+          ROOT_PATH=${{ github.workspace }}
+          mkdir -p ${ROOT_PATH}/source
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
 
       - name: Upload to Artifacts
@@ -268,42 +228,53 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+        with:
+          fetch-depth: 0
 
-      - name: Calculate version
+      - name: Changelog
+        uses: Bullrich/generate-release-changelog@master
+        id: Changelog
+        env:
+          REPO: ${{ github.repository }}
+
+      - name: Init Env
         run: |
-          # Calculate version
-          VERSION=""
-          if [ ${{ github.event_name }} == 'release' -a ${{ github.ref_type }} == 'tag' ]; then
-            VERSION="${{ github.ref_name }}"
-          elif [ -n "${{ inputs.version }}" ]; then
-            if [ "`echo ${{ inputs.version }} | cut -d '.' -f 1,2`" = "`date +'%y.%-m'`" ]; then
-              VERSION="${{ inputs.version }}"
-            else
-              LATEST_TAG="`curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".[0].tag_name" 2>/dev/null`"
-              if [ -n "${LATEST_TAG}" -a "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m'`" ]; then  # format %y.%-m.$i
-                VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
-              else
-                VERSION="`date +'%y.%-m'`.0"
-              fi
-            fi
-          else
-            VERSION=""
-          fi
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          sudo timedatectl set-timezone "Asia/Seoul"
 
-          echo "VERSION: ${VERSION}"
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-
-      - name: download to artifacts
-        if: env.VERSION != ''
+      - name: Download from Artifacts
         uses: actions/download-artifact@v3
         with:
           name: rp-lkms
           path: ./rp-lkms
 
-      - name: Zip lkms
+      - name: Calculate Version
+        run: |
+          # Calculate Version
+          VERSION=""
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
+            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then  # format %y.%-m.$i
+              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
+            else
+              VERSION="`date +'%y.%-m.%-d'`"
+            fi
+          fi
+
+          if [ -n "${VERSION}" ]; then
+            # Modify Source File
+            echo "Version: ${VERSION}"
+            echo "${VERSION}" >VERSION
+            echo "${VERSION}" >"./rp-lkms/VERSION"
+            echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          fi
+
+      - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
           zip -9 rp-lkms.zip -j rp-lkms/*
 
       - name: Release
@@ -311,4 +282,8 @@ jobs:
         if: env.VERSION != ''
         with:
           tag_name: ${{ env.VERSION }}
-          files: rp-lkms.zip
+          prerelease: ${{ inputs.prerelease }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          files: |
+            rp-lkms.zip

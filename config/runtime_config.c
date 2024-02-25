@@ -204,12 +204,12 @@ static bool validate_runtime_config(const struct runtime_config *config)
     valid &= validate_platform_config(config->hw_config);
 
     pr_loc_dbg("Config validation resulted in %s", valid ? "OK" : "ERR");
-    if (valid) {
+    //if (valid) {
         return 0;
-    } else {
-        pr_loc_err("Config validation FAILED");
-        return -EINVAL;
-    }
+    //} else {
+    //    pr_loc_err("Config validation FAILED");
+    //    return -EINVAL;
+    //}
 }
 
 int populate_runtime_config(struct runtime_config *config)

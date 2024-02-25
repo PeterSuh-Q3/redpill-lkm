@@ -56,6 +56,7 @@
 #include "bios/bios_shims_collection.h" //shim_bios_module(), unshim_bios_module(), shim_bios_disk_leds_ctrl()
 #include "bios/bios_hwcap_shim.h" //register_bios_hwcap_shim(), unregister_bios_hwcap_shim(), reset_bios_hwcap_shim()
 #include "bios/bios_psu_status_shim.h" //register_bios_psu_status_shim(), unregister_bios_psu_status_shim(), reset_bios_psu_status_shim()
+#include <linux/elf.h>
 #include <linux/notifier.h> //module notification
 #include <linux/module.h> //struct module
 
@@ -127,7 +128,7 @@ static int bios_module_notifier_handler(struct notifier_block * self, unsigned l
         bios_shimmed = true;
         pr_loc_inf("%s BIOS *fully* shimmed", mod->name);
     } else { //MODULE_STATE_COMING or MODULE_STATE_UNFORMED [but most likely actually MODULE_STATE_COMING]
-        if (likely(state == MODULE_STATE_COMING)){
+        if (likely(state == MODULE_STATE_COMING)) {
             register_bios_hwcap_shim(hw_config);
             register_bios_psu_status_shim(hw_config);
         }

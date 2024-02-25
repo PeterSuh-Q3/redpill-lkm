@@ -867,12 +867,15 @@ const struct hw_config supported_platforms[] = {
     {
         .name = "RS1619xs+",
         .pci_stubs = {
+            { .type = VPD_MARVELL_88SE9215,    .bus = 0x01, .dev = 0x00, .fn = 0x00, .multifunction = false },
+            { .type = VPD_MARVELL_88SE9215,    .bus = 0x02, .dev = 0x00, .fn = 0x00, .multifunction = false },
+            { .type = VPD_MARVELL_88SE9235,    .bus = 0x08, .dev = 0x00, .fn = 0x00, .multifunction = false },
             { .type = __VPD_TERMINATOR__ }
         },
         .emulate_rtc = false,
         .swap_serial = false,
         .reinit_ttyS0 = true,
-        .fix_disk_led_ctrl = true,
+        .fix_disk_led_ctrl = false,
         .has_cpu_temp = true,
         .is_dt = false,
         .hwmon = {

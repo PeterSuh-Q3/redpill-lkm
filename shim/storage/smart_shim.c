@@ -685,8 +685,10 @@ static int handle_hdio_drive_cmd_ioctl(struct block_device *bdev, fmode_t mode, 
     //Before we execute ioctl we need to save the original header as ioctl will override it (they share buffer)
     u8 req_header[HDIO_DRIVE_CMD_HDR_OFFSET];
     if(unlikely(copy_from_user(req_header, buff_ptr, HDIO_DRIVE_CMD_HDR_OFFSET) != 0)) {
-        pr_loc_err("Expected to copy HDIO_DRIVE_CMD header of %d bytes from %p - it failed", HDIO_DRIVE_CMD_HDR_OFFSET,
-                   buff_ptr);
+        if (buff_ptr != NULL) {
+            pr_loc_err("Expected to copy HDIO_DRIVE_CMD header of %d bytes from %p - it failed", HDIO_DRIVE_CMD_HDR_OFFSET,
+                       buff_ptr);
+        }
         return -EIO;
     }
 

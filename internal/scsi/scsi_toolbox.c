@@ -151,7 +151,7 @@ bool is_loader_disk(struct scsi_device *sdp)
             continue;
         }
 
-        pr_loc_dbg("Partition %d type: %d\n", i + 1, part->partno);
+        pr_loc_dbg("Partition %d type: %d", i + 1, part->partno);
 
         if (part->partno == 0x83) {
             vfat_count++;

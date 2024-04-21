@@ -9,13 +9,13 @@
 #include <linux/delay.h> //msleep
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
+#include <linux/fs.h>
+#include <linux/printk.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
 #include <scsi/scsi_transport.h> //struct scsi_transport_template
 #include <scsi/scsi_device.h> //struct scsi_device, scsi_execute_req(), scsi_is_sdev_device()
-#include <linux/fs.h>
-#include <linux/printk.h>
 
 extern struct bus_type scsi_bus_type; //SCSI bus type for driver scanning
 
@@ -135,11 +135,19 @@ bool is_scsi_disk(struct scsi_device *sdp)
     return (likely(sdp) && (sdp)->type == TYPE_DISK);
 }
 
-void check_partition_type(struct gendisk *gd) {
-    struct hd_struct *part;
-    int i;
+bool is_loader_disk(struct scsi_device *sdp) 
+{
+    // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
+    struct hd_struct *part;    
+    struct gendisk *gd;
+    int vfat_count = 0;
 
-    // Loop through each partition
+    // Get the gendisk structure for the SCSI disk
+    gd = sdp->request_queue->queuedata;
+    if (!gd)
+        return false;
+
+    // Scan each partition and count VFAT partitions
     for (i = 0; i < gd->minors; ++i) {
         part = disk_get_part(gd, i + 1);
         if (!part) {
@@ -148,37 +156,11 @@ void check_partition_type(struct gendisk *gd) {
 
         printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
 
-    }
-}
-
-bool is_loader_disk(struct scsi_device *sdp) 
-{
-    // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
-    struct gendisk *gd;
-    int vfat_count = 3;
-
-    // Get the gendisk structure for the SCSI disk
-    gd = sdp->request_queue->queuedata;
-    if (!gd)
-        return false;
-
-    check_partition_type(gd);
-    
-    // Check if the disk has partitions
-    /*
-    if (!gd->part0) {
-        return false;
-    }    
-
-    // Scan each partition and count VFAT partitions
-    for (int i = 1; i <= MAX_PARTITIONS; ++i) {
-        // Check if the partition exists and its type is VFAT (83 Linux)
-        if (gd->part0[i] && gd->part0[i]->info && gd->part0[i]->info->flags & GENHD_FL_UP &&
-            gd->part0[i]->info->type == 0x83 && strncmp(gd->part0[i]->info->type, "Linux", 5) == 0) {
+        if (part->status == 0x83 && strncasecmp(part->type, "Linux", 5) == 0) {
             vfat_count++;
         }
+
     }
-    */
 
     // Check if there are exactly 3 VFAT partitions
     return vfat_count == 3;

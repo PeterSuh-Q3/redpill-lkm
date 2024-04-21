@@ -6,7 +6,6 @@
 #include <linux/unaligned/be_byteshift.h> //get_unaligned_be32()
 #include <linux/delay.h> //msleep
 #include <linux/genhd.h>
-#include <linux/blkdev.h>
 #include <linux/fs.h>
 #include <linux/printk.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
@@ -14,6 +13,7 @@
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
 #include <scsi/scsi_transport.h> //struct scsi_transport_template
 #include <scsi/scsi_device.h> //struct scsi_device, scsi_execute_req(), scsi_is_sdev_device()
+#include <scsi/scsi_disk.h> 
 
 extern struct bus_type scsi_bus_type; //SCSI bus type for driver scanning
 
@@ -136,28 +136,22 @@ bool is_scsi_disk(struct scsi_device *sdp)
 bool is_loader_disk(struct scsi_device *sdp) 
 {
     // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
-    struct hd_struct *part;    
-    struct gendisk *gd;
+    struct gendisk *disk = sdp->disk;
+    struct partition *part;
     int vfat_count = 0;
 
-    // Get the gendisk structure for the SCSI disk
-    gd = sdp->request_queue->queuedata;
-    if (!gd)
-        return false;
-
     // Scan each partition and count VFAT partitions
-    for (int i = 0; i < gd->minors; ++i) {
-        part = disk_get_part(gd, i + 1);
-        if (!part) {
+    for (part = disk->part; part != NULL; part = part->next) {
+        if (part->nr_sects == 0)
             continue;
-        }
 
-        printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
+        printk(KERN_INFO "Partition %d: start sector %llu, VFAT type: %s\n",
+               part->partno, (unsigned long long)part->start_sect,
+               part->info->volname);
 
         if (part->partno == 0x83) {
             vfat_count++;
         }
-
     }
 
     // Check if there are exactly 3 VFAT partitions

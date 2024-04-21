@@ -206,14 +206,3 @@ jobs:
         if: env.VERSION != ''
         run: |
           zip -9 rp-lkms.zip -j rp-lkms/*
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: env.VERSION != ''
-        with:
-          tag_name: ${{ env.VERSION }}
-          prerelease: ${{ inputs.prerelease }}
-          body: |
-            ${{ steps.Changelog.outputs.changelog }}
-          files: |
-            rp-lkms.zip

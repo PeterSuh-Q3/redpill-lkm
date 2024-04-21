@@ -51,12 +51,18 @@ bool scsi_is_boot_dev_target(const struct boot_media *boot_dev_config, struct sc
     }
     
     if (unlikely(get_shimmed_boot_dev())) {
+        pr_loc_wrn("Boot device was already shimmed but a new matching device appeared again - "
+                   "this may produce unpredictable outcomes! Ignoring - check your hardware");
+        return false;
+    }
+/*
+    if (unlikely(get_shimmed_boot_dev())) {
         pr_loc_wrn("Boot device was already shimmed but a new matching device (~%llu MiB <= %lu) appeared again - "
                    "this may produce unpredictable outcomes! Ignoring - check your hardware", capacity_mib,
                    boot_dev_config->dom_size_mib);
         return false;
     }
-/*
+
     pr_loc_dbg("Device has capacity of ~%llu MiB - it is a shimmable target (<=%lu)", capacity_mib,
                boot_dev_config->dom_size_mib);
 */

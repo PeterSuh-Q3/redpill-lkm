@@ -8,7 +8,6 @@
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
 #include <linux/fs.h>
-#include <linux/printk.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
@@ -152,7 +151,7 @@ bool is_loader_disk(struct scsi_device *sdp)
             continue;
         }
 
-        printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
+        pr_loc_dbg("Partition %d type: %d\n", i + 1, part->partno);
 
         if (part->partno == 0x83) {
             vfat_count++;

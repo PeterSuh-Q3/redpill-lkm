@@ -9,7 +9,6 @@
 #include <linux/delay.h> //msleep
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
-#include <linux/hdreg.h> //struct hd_geometry
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
@@ -146,23 +145,17 @@ bool is_loader_disk(struct scsi_device *sdp)
         return false;
 
     // Check if the disk has partitions
-    if (gd->part0 == NULL) {
+    if ((void *)gd->part0 == NULL) {
         return false;
     }    
 
     // Scan each partition and count VFAT partitions
-    struct hd_geometry geo;
-    for (int i = 1; i <= MAX_PARTITIONS; ++i) {
-        if (!blk_get_geometry(gd, i, &geo)) {
-            continue;  // Skip empty partitions
-        }
-
+    for (int i = 0; i < MAX_PARTITIONS; ++i) {
         // Check if the partition type is VFAT (83 Linux)
-        if (gd->part0[i-1].info && gd->part0[i-1].info->Id == 0x83 && strncmp(gd->part0[i-1].info->type, "Linux", 5) == 0) {
+        if (gd->part0[i].info && gd->part0[i].info->Id == 0x83 && strncmp(gd->part0[i].info->type, "Linux", 5) == 0) {
             vfat_count++;
         }
     }
-
 
     // Return true if there are 3 VFAT partitions
     if (vfat_count == 3)

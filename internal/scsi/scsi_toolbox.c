@@ -1,5 +1,3 @@
-#define MAX_PARTITIONS 16
-
 #include "scsi_toolbox.h"
 #include "scsiparam.h" //SCSI_*
 #include "../../common.h"

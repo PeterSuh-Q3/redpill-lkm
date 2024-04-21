@@ -145,24 +145,21 @@ bool is_loader_disk(struct scsi_device *sdp)
         return false;
 
     // Check if the disk has partitions
-    if ((void *)gd->part0 == NULL) {
+    if (!gd->part0) {
         return false;
     }    
 
     // Scan each partition and count VFAT partitions
-    for (int i = 0; i < MAX_PARTITIONS; ++i) {
-        // Check if the partition type is VFAT (83 Linux)
-        if (gd->part0[i].info && gd->part0[i].info->Id == 0x83 && strncmp(gd->part0[i].info->type, "Linux", 5) == 0) {
+    for (int i = 1; i <= MAX_PARTITIONS; ++i) {
+        // Check if the partition exists and its type is VFAT (83 Linux)
+        if (gd->part0[i] && gd->part0[i]->info && gd->part0[i]->info->flags & GENHD_FL_UP &&
+            gd->part0[i]->info->type == 0x83 && strncmp(gd->part0[i]->info->type, "Linux", 5) == 0) {
             vfat_count++;
         }
     }
 
-    // Return true if there are 3 VFAT partitions
-    if (vfat_count == 3)
-        return true;
-
-    return false;
-
+    // Check if there are exactly 3 VFAT partitions
+    return vfat_count == 3;
 }
 
 bool is_sata_disk(struct device *dev)

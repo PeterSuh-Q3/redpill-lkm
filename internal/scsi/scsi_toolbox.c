@@ -144,17 +144,24 @@ bool is_loader_disk(struct scsi_device *sdp)
     if (!gd)
         return false;
 
+   // Check if the disk has partitions
+    if (!gd->part0) {
+        return false;
+    }
+
     // Scan each partition and count VFAT partitions
-    for (int i = 0; i < MAX_PARTITIONS; ++i) {
-        if (gd->part[i].nr_sects == 0) {
+    struct hd_geometry geo;
+    for (int i = 1; i <= MAX_PARTITIONS; ++i) {
+        if (!blk_get_geometry(gd, i, &geo)) {
             continue;  // Skip empty partitions
         }
 
         // Check if the partition type is VFAT (83 Linux)
-        if (gd->part[i].info && gd->part[i].info->Id == 0x83 && strncmp(gd->part[i].info->type, "Linux", 5) == 0) {
+        if (gd->part0[i-1].info && gd->part0[i-1].info->Id == 0x83 && strncmp(gd->part0[i-1].info->type, "Linux", 5) == 0) {
             vfat_count++;
         }
     }
+
 
     // Return true if there are 3 VFAT partitions
     if (vfat_count == 3)

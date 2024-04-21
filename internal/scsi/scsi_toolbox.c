@@ -13,7 +13,6 @@
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
 #include <scsi/scsi_transport.h> //struct scsi_transport_template
 #include <scsi/scsi_device.h> //struct scsi_device, scsi_execute_req(), scsi_is_sdev_device()
-#include <scsi/scsi_disk.h> 
 
 extern struct bus_type scsi_bus_type; //SCSI bus type for driver scanning
 

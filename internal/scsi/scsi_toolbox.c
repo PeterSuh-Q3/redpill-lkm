@@ -1,3 +1,5 @@
+#define MAX_PARTITIONS 16
+
 #include "scsi_toolbox.h"
 #include "scsiparam.h" //SCSI_*
 #include "../../common.h"
@@ -143,7 +145,7 @@ bool is_loader_disk(struct scsi_device *sdp)
         return false;
 
     // Scan each partition and count VFAT partitions
-    for (int i = 0; i < gd->max_parts; ++i) {
+    for (int i = 0; i < MAX_PARTITIONS; ++i) {
         if (gd->part[i].nr_sects == 0) {
             continue;  // Skip empty partitions
         }

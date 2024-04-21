@@ -135,13 +135,14 @@ bool is_scsi_disk(struct scsi_device *sdp)
 bool is_loader_disk(struct scsi_device *sdp) 
 {
     // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
-    struct gendisk *disk = sdp->disk;
+    struct request_queue *queue = sdp->request_queue;
+    struct gendisk *disk = queue->queuedata;
     struct partition *part;
     int vfat_count = 0;
 
     // Scan each partition and count VFAT partitions
     for (part = disk->part; part != NULL; part = part->next) {
-        if (part->nr_sects == 0)
+        if (part->nr_sects == 0 || strcmp(part->info->volname, "vfat") != 0)
             continue;
 
         printk(KERN_INFO "Partition %d: start sector %llu, VFAT type: %s\n",

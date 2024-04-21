@@ -146,12 +146,8 @@ void check_partition_type(struct gendisk *gd) {
             continue;
         }
 
-        // Check partition type
-        if (part->flags & GENHD_FL_HIDDEN) {
-            printk(KERN_INFO "Partition %d is hidden\n", i + 1);
-        } else {
-            printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
-        }
+        printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
+
     }
 }
 

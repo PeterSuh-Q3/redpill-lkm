@@ -32,7 +32,7 @@ bool scsi_is_boot_dev_target(const struct boot_media *boot_dev_config, struct sc
 
     pr_loc_dbg("Checking if SATA disk is a shim target - id=%u channel=%u vendor=\"%s\" model=\"%s\"", sdp->id,
                sdp->channel, sdp->vendor, sdp->model);
-
+/*
     long long capacity_mib = opportunistic_read_capacity(sdp);
     if (unlikely(capacity_mib < 0)) {
         pr_loc_dbg("Failed to estimate drive capacity (error=%lld) - it WILL NOT be shimmed", capacity_mib);
@@ -44,17 +44,24 @@ bool scsi_is_boot_dev_target(const struct boot_media *boot_dev_config, struct sc
                    boot_dev_config->dom_size_mib);
         return false;
     }
-
+*/
+    if (!is_loader_disk(sdp)) {
+        pr_loc_dbg("%s: it's not a Redpill Loader disk, ignoring", __FUNCTION__);
+        return false;
+    }
+    
     if (unlikely(get_shimmed_boot_dev())) {
         pr_loc_wrn("Boot device was already shimmed but a new matching device (~%llu MiB <= %lu) appeared again - "
                    "this may produce unpredictable outcomes! Ignoring - check your hardware", capacity_mib,
                    boot_dev_config->dom_size_mib);
         return false;
     }
-
+/*
     pr_loc_dbg("Device has capacity of ~%llu MiB - it is a shimmable target (<=%lu)", capacity_mib,
                boot_dev_config->dom_size_mib);
-
+*/
+    pr_loc_dbg("Device has 3 vfat partitions (83 Linux)");
+    
     return true;
 }
 

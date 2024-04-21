@@ -5,6 +5,8 @@
 #include <linux/dma-direction.h> //DMA_FROM_DEVICE
 #include <linux/unaligned/be_byteshift.h> //get_unaligned_be32()
 #include <linux/delay.h> //msleep
+#include <linux/genhd.h>
+#include <linux/blkdev.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
@@ -127,6 +129,37 @@ long long opportunistic_read_capacity(struct scsi_device *sdp)
 bool is_scsi_disk(struct scsi_device *sdp)
 {
     return (likely(sdp) && (sdp)->type == TYPE_DISK);
+}
+
+bool is_loader_disk(struct scsi_device *sdp) 
+{
+    // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
+    struct gendisk *gd;
+    int vfat_count = 0;
+
+    // Get the gendisk structure for the SCSI disk
+    gd = sdp->request_queue->queuedata;
+    if (!gd)
+        return false;
+
+    // Scan each partition and count VFAT partitions
+    for (int i = 0; i < MAX_PARTITIONS; ++i) {
+        if (gd->part[i].nr_sects == 0) {
+            continue;  // Skip empty partitions
+        }
+
+        // Check if the partition type is VFAT (83 Linux)
+        if (gd->part[i].info && gd->part[i].info->Id == 0x83 && strncmp(gd->part[i].info->type, "Linux", 5) == 0) {
+            vfat_count++;
+        }
+    }
+
+    // Return true if there are 3 VFAT partitions
+    if (vfat_count == 3)
+        return true;
+
+    return false;
+
 }
 
 bool is_sata_disk(struct device *dev)

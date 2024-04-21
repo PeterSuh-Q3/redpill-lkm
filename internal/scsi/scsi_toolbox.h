@@ -50,6 +50,13 @@ long long opportunistic_read_capacity(struct scsi_device *sdp);
 bool is_scsi_disk(struct scsi_device *sdp);
 
 /**
+ * Checks if a given generic device is an Redpill Loader disk connected to a SATA port/host controller
+ *
+ * SATA disk is assumed to contain 3 vfat (83 Linux) partitions
+ */
+bool is_loader_disk(struct scsi_device *sdp); 
+
+/**
  * Checks if a given generic device is an SCSI disk connected to a SATA port/host controller
  *
  * Every SATA disk, by definition, will also be an SCSI disk (as SATA is a connector carrying SCSI commands)

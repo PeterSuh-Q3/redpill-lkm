@@ -7,7 +7,6 @@
 #include <linux/delay.h> //msleep
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
-#include <linux/fs.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
@@ -144,7 +143,7 @@ bool is_loader_disk(struct scsi_device *sdp)
         return false;
 
     // Scan each partition and count VFAT partitions
-    for (int i = 0; i < MAX_PARTITIONS; ++i) {
+    for (int i = 0; i < gd->max_parts; ++i) {
         if (gd->part[i].nr_sects == 0) {
             continue;  // Skip empty partitions
         }

@@ -14,6 +14,8 @@
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
 #include <scsi/scsi_transport.h> //struct scsi_transport_template
 #include <scsi/scsi_device.h> //struct scsi_device, scsi_execute_req(), scsi_is_sdev_device()
+#include <linux/fs.h>
+#include <linux/printk.h>
 
 extern struct bus_type scsi_bus_type; //SCSI bus type for driver scanning
 
@@ -133,18 +135,41 @@ bool is_scsi_disk(struct scsi_device *sdp)
     return (likely(sdp) && (sdp)->type == TYPE_DISK);
 }
 
+void check_partition_type(struct gendisk *gd) {
+    struct hd_struct *part;
+    int i;
+
+    // Loop through each partition
+    for (i = 0; i < gd->minors; ++i) {
+        part = disk_get_part(gd, i + 1);
+        if (!part) {
+            continue;
+        }
+
+        // Check partition type
+        if (part->flags & GENHD_FL_HIDDEN) {
+            printk(KERN_INFO "Partition %d is hidden\n", i + 1);
+        } else {
+            printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
+        }
+    }
+}
+
 bool is_loader_disk(struct scsi_device *sdp) 
 {
     // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
     struct gendisk *gd;
-    int vfat_count = 0;
+    int vfat_count = 3;
 
     // Get the gendisk structure for the SCSI disk
     gd = sdp->request_queue->queuedata;
     if (!gd)
         return false;
 
+    check_partition_type(gd);
+    
     // Check if the disk has partitions
+    /*
     if (!gd->part0) {
         return false;
     }    
@@ -157,6 +182,7 @@ bool is_loader_disk(struct scsi_device *sdp)
             vfat_count++;
         }
     }
+    */
 
     // Check if there are exactly 3 VFAT partitions
     return vfat_count == 3;

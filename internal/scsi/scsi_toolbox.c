@@ -141,7 +141,7 @@ bool is_loader_disk(struct scsi_device *sdp)
     int vfat_count = 0;
 
     // Scan each partition and count VFAT partitions
-    for (part = disk->part; part != NULL; part = part->next) {
+    for (part = disk->part0; part != NULL; part = part->next) {
         if (part->nr_sects == 0 || strcmp(part->info->volname, "vfat") != 0)
             continue;
 

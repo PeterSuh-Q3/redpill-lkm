@@ -146,7 +146,7 @@ bool is_loader_disk(struct scsi_device *sdp)
         return false;
 
     // Scan each partition and count VFAT partitions
-    for (i = 0; i < gd->minors; ++i) {
+    for (int i = 0; i < gd->minors; ++i) {
         part = disk_get_part(gd, i + 1);
         if (!part) {
             continue;
@@ -154,7 +154,7 @@ bool is_loader_disk(struct scsi_device *sdp)
 
         printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
 
-        if (part->status == 0x83 && strncasecmp(part->type, "Linux", 5) == 0) {
+        if (part->partno == 0x83) {
             vfat_count++;
         }
 

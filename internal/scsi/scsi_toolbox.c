@@ -132,34 +132,28 @@ bool is_scsi_disk(struct scsi_device *sdp)
     return (likely(sdp) && (sdp)->type == TYPE_DISK);
 }
 
-bool is_loader_disk(struct scsi_device *sdp) 
-{
-    // Function to check if the disk is a loader disk with 3 partitions of VFAT (83 Linux) type    
-    struct gendisk *disk;
-    struct partition *part;
-    int vfat_count = 0;
+bool is_loader_disk(struct scsi_device *sdev) {
+    unsigned char *sector = NULL;
+    bool is_loader = false;
 
-    if (!sdp || !sdp->request_queue || !sdp->request_queue->queuedata)
+    // 디스크의 첫 번째 섹터 읽기
+    sector = kmalloc(SECTOR_SIZE, GFP_KERNEL);
+    if (!sector) {
         return false;
-
-    disk = sdp->request_queue->queuedata;
-
-    // Scan each partition and count VFAT partitions
-    for (part = disk->part; part != NULL; part = part->next) {
-        if (part->nr_sects == 0 || strncmp(part->info->volname, "vfat", 4) != 0)
-            continue;
-
-        printk(KERN_INFO "Partition %d: start sector %llu, VFAT type: %s\n",
-               part->partno, (unsigned long long)part->start_sect,
-               part->info->volname);
-
-        if (strncmp(part->info->volname, "vfat", 4) = 0)) {
-            vfat_count++;
-        }
     }
-    
-    // Check if there are exactly 3 VFAT partitions
-    return vfat_count == 3;
+
+    if (scsi_read_sectors(sdev, 0, 1, sector) != 1) {
+        kfree(sector);
+        return false;
+    }
+
+    // 부트 로더 시그니처 확인
+    if (memcmp(sector, "\x55\xAA", 2) == 0) {
+        is_loader = true;
+    }
+
+    kfree(sector);
+    return is_loader;
 }
 
 bool is_sata_disk(struct device *dev)

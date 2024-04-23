@@ -6,7 +6,9 @@
 #include <linux/unaligned/be_byteshift.h> //get_unaligned_be32()
 #include <linux/delay.h> //msleep
 #include <linux/fs.h>
-#include <linux/list.h>
+#include <linux/stdio.h>
+#include <linux/string.h>
+#include <blkid/blkid.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
@@ -132,18 +134,22 @@ bool is_scsi_disk(struct scsi_device *sdp)
 }
 
 bool is_loader_disk(struct scsi_device *sdp) {
-    struct super_block *sb;
-    struct file_system_type *fs_type;
     int vfat_count = 0;
+    blkid_probe pr;
+    const char *type;
 
-    // Traverse the list of mounted file systems
-    list_for_each_entry(sb, &super_block, s_list) {
-        // Check file system type
-        fs_type = sb->s_type;
-        if (strcmp(fs_type->name, "vfat") == 0) {
+    pr = blkid_new_probe_from_device(sdp->dev);
+    if (!pr) {
+        return false;
+    }
+
+    while (blkid_do_probe(pr) == 0) {
+        if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) == 0 && strcmp(type, "vfat") == 0) {
             vfat_count++;
         }
     }
+
+    blkid_free_probe(pr);
 
     // Check if there are exactly 3 VFAT partitions
     return vfat_count == 3;

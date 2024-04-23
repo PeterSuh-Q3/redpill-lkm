@@ -97,13 +97,13 @@ bool is_loader_disk(struct scsi_device *sdp) {
     }
 
     gd = (struct gendisk *)sdp->request_queue->queuedata;
-    if (!gd) {
-        pr_loc_dbg("sdp->request_queue->queuedata is null");
+    if (!gd || !gd->minors) {
+        pr_loc_dbg("sdp->request_queue->queuedata is null or gd->minors is null");
         return false;
     }
 
-    pr_loc_dbg("Scanning each partition and count VFAT partitions...");
-    for (int i = 0; i < 18; ++i) {
+    pr_loc_dbg("Scanning each partition and count VFAT partitions...gd->minors = %d", gd->minors);
+    for (int i = 0; i < gd->minors; ++i) {
         part = disk_get_part(gd, i + 1);
         pr_loc_dbg("i = %d", i);
         if (!part) {

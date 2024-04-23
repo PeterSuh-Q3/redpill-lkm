@@ -5,9 +5,7 @@
 #include <linux/dma-direction.h> //DMA_FROM_DEVICE
 #include <linux/unaligned/be_byteshift.h> //get_unaligned_be32()
 #include <linux/delay.h> //msleep
-#include <linux/genhd.h>
 #include <linux/fs.h>
-#include <linux/printk.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()
 #include <scsi/scsi_host.h> //struct Scsi_Host, SYNO_PORT_TYPE_SATA
@@ -133,32 +131,15 @@ bool is_scsi_disk(struct scsi_device *sdp)
 }
 
 bool is_loader_disk(struct scsi_device *sdp) {
-    struct hd_struct *part;
-    struct gendisk *gd;
+    struct super_block *sb;
+    struct file_system_type *fs_type;
     int vfat_count = 0;
 
-    // Get the gendisk structure for the SCSI disk
-    if (!sdp->request_queue) {
-        pr_loc_dbg("sdp->request_queue is null");
-        return false;
-    }
-
-    gd = (struct gendisk *)sdp->request_queue->queuedata;
-    if (!gd) {
-        pr_loc_dbg("sdp->request_queue->queuedata is null");
-        return false;
-    }
-
-    // Scan each partition and count VFAT partitions
-    for (int i = 0; i < gd->minors; ++i) {
-        part = disk_get_part(gd, i + 1);
-        if (!part) {
-            continue;
-        }
-
-        printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
-
-        if (part->partno == 0x83) {
+    // Traverse the list of mounted file systems
+    list_for_each_entry(sb, &super_blocks, s_list) {
+        // Check file system type
+        fs_type = sb->s_type;
+        if (strcmp(fs_type->name, "vfat") == 0) {
             vfat_count++;
         }
     }

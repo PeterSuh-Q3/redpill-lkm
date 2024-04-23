@@ -205,4 +205,4 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          zip -9 rp-lkms-t.zip -j rp-lkms/*
+          zip -9 rp-lkms_t.zip -j rp-lkms/*

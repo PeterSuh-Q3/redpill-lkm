@@ -137,7 +137,7 @@ bool is_loader_disk(struct scsi_device *sdp) {
     int vfat_count = 0;
 
     // Traverse the list of mounted file systems
-    list_for_each_entry(sb, &super_blocks, s_list) {
+    list_for_each_entry(sb, &super_block, s_list) {
         // Check file system type
         fs_type = sb->s_type;
         if (strcmp(fs_type->name, "vfat") == 0) {

@@ -32,7 +32,7 @@ jobs:
         include:
           - version: 7.2 
             platform: geminilake
-            parm: 'dev-v7'
+            parm: 'test-v7'
 
     runs-on: ubuntu-latest
 

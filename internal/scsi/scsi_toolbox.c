@@ -6,8 +6,6 @@
 #include <linux/unaligned/be_byteshift.h> //get_unaligned_be32()
 #include <linux/delay.h> //msleep
 #include <linux/fs.h>
-#include <linux/stdio.h>
-#include <linux/string.h>
 #include <blkid/blkid.h>
 #include <scsi/scsi.h> //cmd consts (e.g. SERVICE_ACTION_IN), SCAN_WILD_CARD, and TYPE_DISK
 #include <scsi/scsi_eh.h> //struct scsi_sense_hdr, scsi_sense_valid()

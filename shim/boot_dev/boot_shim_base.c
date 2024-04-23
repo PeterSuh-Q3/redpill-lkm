@@ -30,7 +30,7 @@ bool scsi_is_boot_dev_target(const struct boot_media *boot_dev_config, struct sc
         return false;
     }
 
-    pr_loc_dbg("Checking if SATA disk is a shim target - dev-name=\"%s\" id=%u channel=%u vendor=\"%s\" model=\"%s\"", sdp->dev_name, sdp->id,
+    pr_loc_dbg("Checking if SATA disk is a shim target - id=%u channel=%u vendor=\"%s\" model=\"%s\"", sdp->id,
                sdp->channel, sdp->vendor, sdp->model);
 /*
     long long capacity_mib = opportunistic_read_capacity(sdp);

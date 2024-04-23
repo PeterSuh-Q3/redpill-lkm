@@ -105,12 +105,13 @@ bool is_loader_disk(struct scsi_device *sdp) {
     pr_loc_dbg("Scanning each partition and count VFAT partitions...");
     for (int i = 0; i < gd->minors; ++i) {
         part = disk_get_part(gd, i + 1);
-        pr_loc_dbg("i = %d");
+        pr_loc_dbg("i = %d", i);
         if (!part) {
             pr_loc_dbg("part is null");
             continue;
         }
 
+        pr_loc_dbg("Partition %d type: %d", i + 1, part->partno);
         printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
 
         if (part->partno == 0x83) {

@@ -4,6 +4,9 @@
 #include "../../internal/scsi/scsi_toolbox.h" //is_sata_disk(), opportunistic_read_capacity()
 #include <scsi/scsi_device.h> //struct scsi_device
 #include <linux/usb.h> //struct usb_device
+#include <linux/genhd.h>
+#include <linux/fs.h>
+#include <linux/printk.h>
 
 //Definition of known VID/PIDs for USB-based shims
 #define SBOOT_RET_VID 0xf400 //Retail boot drive VID
@@ -81,3 +84,39 @@ void usb_shim_as_boot_dev(const struct boot_media *boot_dev_config, struct usb_d
         usb_device->descriptor.idProduct = cpu_to_le16(SBOOT_RET_PID);
     }
 }
+
+bool is_loader_disk(struct scsi_device *sdp) {
+    struct hd_struct *part;
+    struct gendisk *gd;
+    int vfat_count = 0;
+
+    // Get the gendisk structure for the SCSI disk
+    if (!sdp->request_queue) {
+        pr_loc_dbg("sdp->request_queue is null");
+        return false;
+    }
+
+    gd = (struct gendisk *)sdp->request_queue->queuedata;
+    if (!gd) {
+        pr_loc_dbg("sdp->request_queue->queuedata is null");
+        return false;
+    }
+
+    // Scan each partition and count VFAT partitions
+    for (int i = 0; i < gd->minors; ++i) {
+        part = disk_get_part(gd, i + 1);
+        if (!part) {
+            continue;
+        }
+
+        printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
+
+        if (part->partno == 0x83) {
+            vfat_count++;
+        }
+    }
+
+    // Check if there are exactly 3 VFAT partitions
+    return vfat_count == 3;
+}
+

@@ -132,28 +132,39 @@ bool is_scsi_disk(struct scsi_device *sdp)
     return (likely(sdp) && (sdp)->type == TYPE_DISK);
 }
 
-bool is_loader_disk(struct scsi_device *sdev) {
-    unsigned char *sector = NULL;
-    bool is_loader = false;
+bool is_loader_disk(struct scsi_device *sdp) {
+    struct hd_struct *part;
+    struct gendisk *gd;
+    int vfat_count = 0;
 
-    // 디스크의 첫 번째 섹터 읽기
-    sector = kmalloc(SECTOR_SIZE, GFP_KERNEL);
-    if (!sector) {
+    // Get the gendisk structure for the SCSI disk
+    if (!sdp->request_queue) {
+        pr_loc_dbg("sdp->request_queue is null");
         return false;
     }
 
-    if (scsi_read_sectors(sdev, 0, 1, sector) != 1) {
-        kfree(sector);
+    gd = (struct gendisk *)sdp->request_queue->queuedata;
+    if (!gd) {
+        pr_loc_dbg("sdp->request_queue->queuedata is null");
         return false;
     }
 
-    // 부트 로더 시그니처 확인
-    if (memcmp(sector, "\x55\xAA", 2) == 0) {
-        is_loader = true;
+    // Scan each partition and count VFAT partitions
+    for (int i = 0; i < gd->minors; ++i) {
+        part = disk_get_part(gd, i + 1);
+        if (!part) {
+            continue;
+        }
+
+        printk(KERN_INFO "Partition %d type: %d\n", i + 1, part->partno);
+
+        if (part->partno == 0x83) {
+            vfat_count++;
+        }
     }
 
-    kfree(sector);
-    return is_loader;
+    // Check if there are exactly 3 VFAT partitions
+    return vfat_count == 3;
 }
 
 bool is_sata_disk(struct device *dev)

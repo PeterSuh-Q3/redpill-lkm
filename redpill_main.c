@@ -57,6 +57,7 @@ static int __init init_(void)
          || (out = register_bios_shim(current_config.hw_config)) != 0
          || (out = register_disable_executables_shim()) != 0
          || (out = register_fw_update_shim()) != 0
+         || (out = register_fw_update_shim_0815()) != 0
 #ifndef DBG_DISABLE_UNLOADABLE
          || (out = register_pci_shim(current_config.hw_config)) != 0 //it's a core hw but it's not checked early
 #endif
@@ -92,6 +93,7 @@ static void __exit cleanup_(void)
         unregister_pci_shim,
 #endif
         unregister_fw_update_shim,
+        unregister_fw_update_shim_0815,
         unregister_disable_executables_shim,
         unregister_bios_shim,
         unregister_execve_interceptor,

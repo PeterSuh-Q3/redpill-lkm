@@ -29,7 +29,7 @@
 
 #define DMI_MAX_LEN 512
 #define FW_BOARD_NAME "\x53\x79\x6e\x6f\x64\x65\x6e"    //Synoden
-#define FW_UPDATE_PATH_BASE "./H2OFFT-Lx64"
+#define FW_UPDATE_PATH "./H2OFFT-Lx64"
 #define FW_UPDATE_PATH_0815 "./H2OFFT-Lx64-0815"
 
 static char dmi_product_name_backup[DMI_MAX_LEN] = { '\0' };
@@ -70,13 +70,8 @@ static void unpatch_dmi(void)
 int register_fw_update_shim(void)
 {
     shim_reg_in();
-    int out = 0;
-    
-    out = add_blocked_execve_filename(FW_UPDATE_PATH_BASE);
-    if (out != 0)
-        return out;
 
-    out = add_blocked_execve_filename(FW_UPDATE_PATH_0815);
+    int out = add_blocked_execve_filename(FW_UPDATE_PATH);
     if (out != 0)
         return out;
 
@@ -87,6 +82,31 @@ int register_fw_update_shim(void)
 }
 
 int unregister_fw_update_shim(void)
+{
+    shim_ureg_in();
+
+    //Do not remove execve registration here - it will be cleared in one sweep during unregister of interceptor
+    unpatch_dmi();
+
+    shim_ureg_ok();
+    return 0;
+}
+
+int register_fw_update_shim_0815(void)
+{
+    shim_reg_in();
+
+    int out = add_blocked_execve_filename(FW_UPDATE_PATH_0815);
+    if (out != 0)
+        return out;
+
+    patch_dmi();
+
+    shim_reg_ok();
+    return 0;
+}
+
+int unregister_fw_update_shim_0815(void)
 {
     shim_ureg_in();
 

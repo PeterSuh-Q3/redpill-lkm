@@ -211,10 +211,33 @@ jobs:
           mkdir -p ${ROOT_PATH}/source
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
 
+      - name: Calculate Version
+        run: |
+          # Calculate Version
+          VERSION=""
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
+            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then  # format %y.%-m.$i
+              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
+            else
+              VERSION="`date +'%y.%-m.%-d'`"
+            fi
+          fi
+
+          if [ -n "${VERSION}" ]; then
+            # Modify Source File
+            echo "Version: ${VERSION}"
+            echo "${VERSION}" >VERSION
+            echo "${VERSION}" >"./rp-lkms/VERSION"
+            echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          fi
+          
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-lkms-${VERSION}
           path: |
             ${{ github.workspace }}/source/output/*
 
@@ -248,36 +271,13 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-lkms-${VERSION}
           path: ./rp-lkms
-
-      - name: Calculate Version
-        run: |
-          # Calculate Version
-          VERSION=""
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          else
-            LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
-            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then  # format %y.%-m.$i
-              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
-            else
-              VERSION="`date +'%y.%-m.%-d'`"
-            fi
-          fi
-
-          if [ -n "${VERSION}" ]; then
-            # Modify Source File
-            echo "Version: ${VERSION}"
-            echo "${VERSION}" >VERSION
-            echo "${VERSION}" >"./rp-lkms/VERSION"
-            echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          fi
 
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          zip -9 rp-lkms.zip -j rp-lkms/*
+          zip -9 rp-lkms-${VERSION}.zip -j rp-lkms/*
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -288,4 +288,4 @@ jobs:
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           files: |
-            rp-lkms.zip
+            rp-lkms-${VERSION}.zip

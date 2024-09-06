@@ -214,16 +214,16 @@ jobs:
           EOF
 
           ROOT_PATH=${{ github.workspace }}
-          mkdir -p ${ROOT_PATH}/output
-          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/output/
-          ls -l ${ROOT_PATH}/output/
+          mkdir -p ${ROOT_PATH}/source/output
+          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/output/
+          ls -al ${ROOT_PATH}/source/output/
          
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rp-lkms-${{ matrix.version }}-${{ matrix.platform }}
           path: |
-            output/*
+            source/output/*
             
   release:
     runs-on: ubuntu-latest
@@ -270,7 +270,7 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: output
+          path: source/output
           name: rp-lkms-*
           merge-multiple: true
 

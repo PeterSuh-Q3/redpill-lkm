@@ -8,7 +8,7 @@
 
 # set -x
 
-apt install -y curl build-essential bison flex dwarves ruby libncurses-dev libssl-dev libelf-dev
+# apt install -y curl build-essential bison flex dwarves ruby libncurses-dev libssl-dev libelf-dev
 
 WORK_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 

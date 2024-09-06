@@ -6,8 +6,8 @@
 #include "../../common.h"
 #include "../shim_base.h"
 #include "../../internal/override/override_symbol.h" //overriding HWMONGetPSUStatusByI2C
-#include "../../config/platform_types.h" //hw_config, platform_has_hwmon_*
-#include <linux/synobios.h> //CAPABILITY_*, CAPABILITY
+#include "../../config/platform_types.h"             //hw_config, platform_has_hwmon_*
+#include <linux/synobios.h>                          //CAPABILITY_*, CAPABILITY
 
 #define SHIM_NAME "mfgBIOS HWMONGetPSUStatusByI2C"
 
@@ -29,11 +29,6 @@ static int HWMONGetPSUStatusByI2C_shim(void)
 }
 
 static int HWMONI2CGetPowerInfo_shim(void)
-{
-    return 0;
-}
-
-int I2CSmbusReadPowerStatus(void)
 {
     return 0;
 }
@@ -62,7 +57,7 @@ int register_bios_psu_status_shim(const struct hw_config *hw)
         shim_reg_already();
     if (unlikely(SA6500I2CGetPowerInfo_ovs))
         shim_reg_already();
-        
+
     hw_config = hw;
     override_symbol_or_exit_int(HWMONGetPSUStatusByI2C_ovs, "HWMONGetPSUStatusByI2C", HWMONGetPSUStatusByI2C_shim);
     override_symbol_or_exit_int(RS4021xspI2CGetPowerInfo_ovs, "RS4021xspI2CGetPowerInfo", HWMONI2CGetPowerInfo_shim);
@@ -84,91 +79,101 @@ int unregister_bios_psu_status_shim(void)
     shim_ureg_in();
 
     if (unlikely(!HWMONGetPSUStatusByI2C_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!RS4021xspI2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!RS4022xspI2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!RS4023xspI2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!RS4024xspI2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!FS3410I2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!FS6400I2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!FS6500I2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!HD6500I2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
     if (unlikely(!SA6500I2CGetPowerInfo_ovs))
-        return 0; //this is deliberately a noop
+        return 0; // this is deliberately a noop
 
     out = restore_symbol(HWMONGetPSUStatusByI2C_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore HWMONGetPSUStatusByI2C_ovs - error=%d", out);
         return out;
     }
     HWMONGetPSUStatusByI2C_ovs = NULL;
 
     out = restore_symbol(RS4021xspI2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore RS4021xspI2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     RS4021xspI2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(RS4022xspI2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore RS4022xspI2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     RS4022xspI2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(RS4023xspI2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore RS4023xspI2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     RS4023xspI2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(RS4024xspI2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore RS4024xspI2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     RS4024xspI2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(FS3410I2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore FS3410I2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     FS3410I2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(FS6400I2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore FS6400I2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     FS6400I2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(FS6500I2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore FS6500I2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     FS6500I2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(HD6500I2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore HD6500I2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
     HD6500I2CGetPowerInfo_ovs = NULL;
 
     out = restore_symbol(SA6500I2CGetPowerInfo_ovs);
-    if (unlikely(out != 0)) {
+    if (unlikely(out != 0))
+    {
         pr_loc_err("Failed to restore SA6500I2CGetPowerInfo_ovs - error=%d", out);
         return out;
     }
@@ -202,7 +207,7 @@ int reset_bios_psu_status_shim(void)
     HD6500I2CGetPowerInfo_ovs = NULL;
     put_overridden_symbol(SA6500I2CGetPowerInfo_ovs);
     SA6500I2CGetPowerInfo_ovs = NULL;
-    
+
     shim_reset_ok();
     return 0;
 }

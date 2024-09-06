@@ -27,7 +27,11 @@ on:
         description: 'format %y.%-m.$i or auto'
         required: false
         type: string
-
+      prerelease:
+        description: "pre release"
+        default: false
+        type: boolean
+        
 jobs:
   build:
     strategy:
@@ -110,7 +114,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
 
       - name: Init Env
         run: |
@@ -121,6 +125,8 @@ jobs:
       - name: Get EnvDeploy
         run: |
           ROOT_PATH=${{ github.workspace }}
+          VERSION=${{ matrix.version }}
+          PLATFORM=${{ matrix.platform }}          
 
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
@@ -210,36 +216,13 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
-
-      - name: Calculate Version
-        run: |
-          # Calculate Version
-          VERSION=""
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          else
-            LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
-            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then  # format %y.%-m.$i
-              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
-            else
-              VERSION="`date +'%y.%-m.%-d'`"
-            fi
-          fi
-
-          if [ -n "${VERSION}" ]; then
-            # Modify Source File
-            echo "Version: ${VERSION}"
-            echo "${VERSION}" >VERSION
-            echo "${VERSION}" >"./rp-lkms/VERSION"
-            echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          fi
-          
+         
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms-${VERSION}
+          name: rp-lkms-${{ matrix.version }}-${{ matrix.platform }}
           path: |
-            ${{ github.workspace }}/source/output/*
+            output/*
 
       - name: clean
         # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
@@ -268,24 +251,61 @@ jobs:
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone "Asia/Seoul"
 
+      - name: Calculate Version
+        run: |
+          # Calculate Version
+          VERSION=""
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
+            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then  # format %y.%-m.$i
+              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
+            else
+              VERSION="`date +'%y.%-m.%-d'`"
+            fi
+          fi
+
+          if [ -n "${VERSION}" ]; then
+            # Modify Source File
+            echo "Version: ${VERSION}"
+            echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          fi
+
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms-${VERSION}
-          path: ./rp-lkms
+          path: output
+          name: rp-lkms-*
+          merge-multiple: true
 
-      - name: Zip Lkms
-        if: env.VERSION != ''
+      - name: delete-artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            rp-lkms-*
+            
+      - name: Zip lkms
         run: |
-          zip -9 rp-lkms-${VERSION}.zip -j rp-lkms/*
+          VERSION="${{ env.VERSION }}"
+          VERSION="${VERSION:-"test"}"
+
+          echo "${VERSION}" > "output/VERSION"
+          zip -9 rp-lkms-${VERSION}.zip -j output/*
+
+      - name: Upload to Artifacts
+        if: success() && env.VERSION == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: rp-lkms
+          path: |
+            rp-lkms*.zip
+          retention-days: 5          
 
       - name: Release
-        uses: softprops/action-gh-release@v1
-        if: env.VERSION != ''
+        if: success() && env.VERSION != ''
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ env.VERSION }}
+          tag: ${{ env.VERSION }}
           prerelease: ${{ inputs.prerelease }}
-          body: |
-            ${{ steps.Changelog.outputs.changelog }}
-          files: |
-            rp-lkms-${VERSION}.zip
+          artifacts: rp-lkms*.zip

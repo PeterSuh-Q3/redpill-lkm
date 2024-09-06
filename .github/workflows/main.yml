@@ -37,9 +37,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1 
-            platform: apollolake
-            parm: 'prod-v7'
+          #- version: 7.1 
+          #  platform: apollolake
+          #  parm: 'prod-v7'
           #- version: 7.1
           #  platform: broadwell
           #  parm: 'prod-v7'

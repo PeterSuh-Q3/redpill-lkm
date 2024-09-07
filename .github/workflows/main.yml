@@ -175,11 +175,7 @@ jobs:
 
       - name: Make LKMs
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          VERSION=${{ matrix.version }}
-          PLATFORM=${{ matrix.platform }}
-          
-          sudo chroot build_env/ds.$PLATFORM-$VERSION << "EOF"
+          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
           while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
           mkdir -p /source/output
@@ -200,10 +196,10 @@ jobs:
               strip -g redpill.ko    # Discard symbols from object files. 
               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
               gzip redpill.ko
-              if [ "$PLATFORM" = "epyc7002" ]; then
-                mv -f ./redpill.ko.gz /source/output/rp-$PLATFORM-$VERSION-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+              if [ "${{ matrix.platform }}" = "epyc7002" ]; then
+                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
               else
-                mv -f ./redpill.ko.gz /source/output/rp-$PLATFORM-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
               fi
             else
               echo "error"
@@ -212,9 +208,10 @@ jobs:
           done        
           ls -al /source/output
           EOF
-          
+
+          ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source
-          sudo cp -a ${ROOT_PATH}/build_env/ds.$PLATFORM-$VERSION/source/output ${ROOT_PATH}/source/
+          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v3

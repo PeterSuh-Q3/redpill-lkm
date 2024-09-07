@@ -152,7 +152,7 @@ jobs:
           #!/bin/env bash
           source ~/.bashrc
           mkdir -p /source
-          cd pkgscripts
+          cd pkgscripts-ng
           [ ${1:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
           sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
           ./SynoBuild -c -p ${2}

@@ -15,7 +15,7 @@
 #   - version: "7.2"
 #     platform: "broadwell"
 
-name: Build lkms 7.1, 7.2 v3
+name: Build lkms 7.1, 7.2 v4
 
 on:  
   release:

@@ -131,21 +131,21 @@ jobs:
           git reset --hard
           git pull          
           git checkout DSM${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")
-          ./EnvDeploy -v ${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4") -l # Get Available PLATFORMs
-          ./EnvDeploy -q -v ${VERSION} -p ${PLATFORM}
+          sudo ./EnvDeploy -v ${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4") -l # Get Available PLATFORMs
+          sudo ./EnvDeploy -q -v ${VERSION} -p ${PLATFORM}
           RET=$?
           popd
           [ ${RET} -ne 0 ] && echo "EnvDeploy failed." && return 1
 
           ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
-          cp -al "${ROOT_PATH}/pkgscripts-ng" "${ENV_PATH}/"
+          sudo cp -al "${ROOT_PATH}/pkgscripts-ng" "${ENV_PATH}/"
 
           # Fault tolerance of pkgscripts-ng
           if [ "${PLATFORM}" == "broadwellntbap" -a "${VERSION}" == "7.1" ]; then
-            sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ENV_PATH}/pkgscripts-ng/include/platforms
+            sudo sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ENV_PATH}/pkgscripts-ng/include/platforms
           fi
 
-          rm -f script.sh
+          sudo rm -f script.sh
           cat >script.sh <<"EOF"
           #!/bin/env bash
           source ~/.bashrc

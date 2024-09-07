@@ -209,7 +209,10 @@ jobs:
 
           ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source
+          ls -al ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/*
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
+          ls -al ${ROOT_PATH}/source/
+          ls -al ${{ github.workspace }}/source/output/*
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
@@ -219,7 +222,7 @@ jobs:
             ${{ github.workspace }}/source/output/*
 
       - name: clean
-        # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
+        if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
         run: |
           sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
 
@@ -250,6 +253,7 @@ jobs:
         with:
           name: rp-ms-lkms
           path: ./rp-lkms
+          merge-multiple: true
 
       - name: Calculate Version
         run: |

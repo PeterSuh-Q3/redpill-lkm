@@ -73,7 +73,7 @@ jobs:
 
           - version: 7.2
             platform: apollolake
-            parm: 'dev-v7 prod-v7'
+            parm: 'prod-v7'
           #- version: 7.2
           #  platform: broadwell
           #  parm: 'prod-v7'

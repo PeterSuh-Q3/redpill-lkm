@@ -124,6 +124,8 @@ jobs:
           VERSION=${{ matrix.version }}
           PLATFORM=${{ matrix.platform }}
 
+          sudo apt install -y curl build-essential bison flex dwarves ruby libncurses-dev libssl-dev libelf-dev
+
           if [ ! -d "${ROOT_PATH}/pkgscripts-ng" ]; then
             git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           fi  

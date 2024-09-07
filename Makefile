@@ -13,7 +13,7 @@ SRCS-y  += compat/string_compat.c \
 		   internal/override/override_symbol.c internal/override/override_syscall.c internal/intercept_execve.c \
 		   internal/call_protected.c internal/intercept_driver_register.c internal/stealth/sanitize_cmdline.c \
 		   internal/stealth.c internal/virtual_pci.c internal/uart/uart_swapper.c internal/uart/vuart_virtual_irq.c \
-		   internal/uart/virtual_uart.c internal/ioscheduler_fixer.c \
+		   internal/uart/virtual_uart.c \
 		   \
 		   config/cmdline_delegate.c config/runtime_config.c \
 		   \
@@ -40,12 +40,6 @@ RP_VERSION_POSTFIX := $(shell git rev-parse --is-inside-work-tree 1>/dev/null 2>
 endif
 ccflags-y += -DRP_VERSION_POSTFIX="\"$(RP_VERSION_POSTFIX)\""
 
-ifeq ($(PLATFORM),)
-    PLATFORM = unknown
-endif
-ccflags-y += -DRP_PLATFORM_$(shell echo $(PLATFORM) | tr '[:lower:]' '[:upper:]')
-$(info RP-PLATFORM: RP_PLATFORM_$(shell echo $(PLATFORM) | tr '[:lower:]' '[:upper:]'))
-
 # Optimization settings per-target. Since LKM makefiles are evaluated twice (first with the specified target and second
 # time with target "modules") we need to set the custom target variable during first parsing and based on that variable
 # set additional CC-flags when the makefile is parsed for the second time
@@ -54,7 +48,8 @@ ccflags-dev = -g -fno-inline -DDEBUG
 ccflags-test = -O3
 ccflags-prod = -O3
 ccflags-y += -DRP_MODULE_TARGET_VER=${RP_MODULE_TARGET_VER} # this is assumed to be defined when target is specified
-$(info RP-TARGET AS: ${RP_MODULE_TARGET} v${RP_MODULE_TARGET_VER})
+
+$(info RP-TARGET SPECIFIED AS ${RP_MODULE_TARGET} v${RP_MODULE_TARGET_VER})
 
 # stealth mode can always be overridden but there are sane per-target defaults (see above)
 ifneq ($(STEALTH_MODE),)

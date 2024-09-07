@@ -56,9 +56,7 @@
 #include "bios/bios_shims_collection.h" //shim_bios_module(), unshim_bios_module(), shim_bios_disk_leds_ctrl()
 #include "bios/bios_hwcap_shim.h" //register_bios_hwcap_shim(), unregister_bios_hwcap_shim(), reset_bios_hwcap_shim()
 #include "bios/bios_psu_status_shim.h" //register_bios_psu_status_shim(), unregister_bios_psu_status_shim(), reset_bios_psu_status_shim()
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)
 #include <linux/elf.h>
-#endif
 #include <linux/notifier.h> //module notification
 #include <linux/module.h> //struct module
 
@@ -351,8 +349,7 @@ static int _apply_relocate_add(Elf64_Shdr *sechdrs, const char *strtab, unsigned
                 val -= (u64)loc;
                 *(u32 *)loc = val;
                 break;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)
-#else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,20,0)
             case R_X86_64_PC64:
                 val -= (u64)loc;
                 *(u64 *)loc = val;

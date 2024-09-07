@@ -46,8 +46,7 @@
  */
 static bool is_fixable(struct scsi_device *sdp)
 {
-    return current_config.hw_config->is_dt == false &&    // Device-tree models causes a kernel panic if type is changed
-        (sdp->host->hostt->syno_port_type == SYNO_PORT_TYPE_SAS ||
+    return (sdp->host->hostt->syno_port_type == SYNO_PORT_TYPE_SAS ||
            (sdp->host->hostt->syno_port_type != SYNO_PORT_TYPE_SATA &&
             strcmp(sdp->host->hostt->name, VIRTIO_HOST_ID) == 0));
 }

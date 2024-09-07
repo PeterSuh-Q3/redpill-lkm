@@ -168,9 +168,9 @@ jobs:
               [ -f "/env64.mak" ] && echo "CCVER=${CCVER}" >>/env64.mak
           fi
           EOF
-          mv -f script.sh "${ENV_PATH}/script.sh"
-          chmod +x "${ENV_PATH}/script.sh"
-          chroot "${ENV_PATH}" "/script.sh" "${VERSION}" "${PLATFORM}"
+          sudo mv -f script.sh "${ENV_PATH}/script.sh"
+          sudo chmod +x "${ENV_PATH}/script.sh"
+          sudo chroot "${ENV_PATH}" "/script.sh" "${VERSION}" "${PLATFORM}"
           RET=$?
           [ ${RET} -ne 0 ] && echo "Chroot build failed." && return 1
           

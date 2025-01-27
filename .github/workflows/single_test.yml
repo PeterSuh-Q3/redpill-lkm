@@ -115,8 +115,8 @@ jobs:
           cd /source/input
           [ -z "`grep 'env.mak' Makefile`" ] && sed -i '1 i include /env.mak' Makefile
           array=(${{ matrix.parm }})
-          for a in ${array[@]}
-          do
+          for a in ${array[@]}; do
+            PLATFORM="${{ matrix.platform }}" make -j$(nproc) CC="${CC}" "${a}"
             make ${a}
             if [ -f redpill.ko ]; then
               strip -g redpill.ko    # Discard symbols from object files. 

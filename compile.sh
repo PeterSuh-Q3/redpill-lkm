@@ -33,7 +33,7 @@ function makeEnvDeploy() {
   [ ${RET} -ne 0 ] && echo "EnvDeploy failed." && return 1
 
   ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
-  sudo cp -Rs "${ROOT_PATH}/pkgscripts-ng" "${ENV_PATH}/"
+  sudo cp -al "${ROOT_PATH}/pkgscripts-ng" "${ENV_PATH}/"
 
   # Fault tolerance of pkgscripts-ng
   if [ "${PLATFORM}" == "broadwellntbap" -a "${VERSION}" == "7.1" ]; then
@@ -98,7 +98,7 @@ function makelkms() {
   sudo rm -rf "${ENV_PATH}/source" "${ENV_PATH}/output" 2>/dev/null
   sudo mkdir -p "${ENV_PATH}/source"
   sudo mkdir -p "${ENV_PATH}/output"
-  sudo cp -Rs "${SOURCE}/"* "${ENV_PATH}/source/"
+  sudo cp -al "${SOURCE}/"* "${ENV_PATH}/source/"
 
   sudo rm -f script.sh
   cat >script.sh <<"EOF"

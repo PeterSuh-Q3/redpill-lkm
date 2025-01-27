@@ -24,6 +24,10 @@
 #include <linux/fs.h> //struct filename
 #include "override/override_syscall.h" //SYSCALL_SHIM_DEFINE3, override_symbol
 #include "call_protected.h" //do_execve(), getname(), putname()
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)
+#else
+#include "helper/ftrace_helper.h"
+#endif
 
 #ifdef RPDBG_EXECVE
 #include "../debug/debug_execve.h"
@@ -58,6 +62,7 @@ int add_blocked_execve_filename(const char *filename)
     return 0;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)
 SYSCALL_SHIM_DEFINE3(execve,
                      const char __user *, filename,
                      const char __user *const __user *, argv,
@@ -143,3 +148,80 @@ int unregister_execve_interceptor()
     pr_loc_inf("execve() interceptor unregistered");
     return 0;
 }
+#else
+static asmlinkage long (*orig_execve)(const struct pt_regs *);
+
+/*
+ * The hook for sys_execve()
+ */
+asmlinkage int hook_execve(const struct pt_regs *regs)
+{
+    char *filename = (char *)regs->di;
+
+    char *kbuf;
+    long error;
+    int i;
+
+    /*
+     * We need a buffer to copy filename into
+     */
+    kbuf = kzalloc(NAME_MAX, GFP_KERNEL);
+    if(kbuf == NULL)
+        return orig_execve(regs);
+
+    /*
+     * Copy filename from userspace into our kernel buffer
+     */
+    error = copy_from_user(kbuf, filename, NAME_MAX);
+    if(error){
+        kfree(kbuf);
+        return orig_execve(regs);
+    }
+
+    for (i = 0; i < MAX_INTERCEPTED_FILES; i++) {
+        if (!intercepted_filenames[i])
+            break;
+
+        if (unlikely(strcmp(kbuf, intercepted_filenames[i]) == 0)) {
+            pr_loc_inf("Blocked %s from running", kbuf);
+            kfree(kbuf);
+            //We cannot just return 0 here - execve() *does NOT* return on success, but replaces the current process ctx
+            do_exit(0);
+        }
+    }
+
+    /*
+     * Clean up and return
+     */
+    kfree(kbuf);
+    return orig_execve(regs);
+}
+
+/* Declare the struct that ftrace needs to hook the syscall */
+static struct ftrace_hook hooks[] = {
+    HOOK("__x64_sys_execve", hook_execve, &orig_execve),
+};
+
+static override_symbol_inst *sys_execve_ovs = NULL;
+int register_execve_interceptor()
+{
+    pr_loc_dbg("Registering execve() interceptor");
+
+    int err;
+    err = fh_install_hooks(hooks, ARRAY_SIZE(hooks));
+    if(err)
+        return err;
+
+    pr_loc_inf("execve() interceptor registered");
+    return 0;
+}
+
+int unregister_execve_interceptor()
+{
+    pr_loc_dbg("Unregistering execve() interceptor");
+    /* Unhook and restore the syscall and print to the kernel buffer */
+    fh_remove_hooks(hooks, ARRAY_SIZE(hooks));
+    pr_loc_inf("execve() interceptor unregistered");
+    return 0;
+}
+#endif

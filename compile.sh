@@ -112,9 +112,9 @@ cd /source/
 VN="v${1:0:1}"
 array=(dev-${VN} prod-${VN} test-${VN})
 for a in ${array[@]}; do
-  PLATFORM="${2}" make ${a}
+  PLATFORM="${2}" make -j$(nproc) CC="${CC}" "${a}"
   if [ -f redpill.ko ]; then
-    strip -g redpill.ko # Discard symbols from object files.
+    ${STRIP_ORI} -g redpill.ko # Discard symbols from object files.
     RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
     gzip redpill.ko
     if [ "${2}" = "epyc7002" ]; then

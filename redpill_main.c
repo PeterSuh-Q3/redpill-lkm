@@ -4,6 +4,9 @@
 #include "common.h" //commonly used headers in this module
 #include "internal/intercept_execve.h" //Handling of execve() replacement
 #include "internal/scsi/scsi_notifier.h" //the missing pub/sub handler for SCSI driver
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)
+#include "internal/ioscheduler_fixer.h" //reset_elevator() to correct elevator= boot cmdline
+#endif
 #include "config/cmdline_delegate.h" //Parsing of kernel cmdline
 #include "shim/boot_device_shim.h" //Registering & deciding between boot device shims
 #include "shim/bios_shim.h" //Shimming various mfgBIOS functions to make them happy
@@ -63,6 +66,9 @@ static int __init init_(void)
          || (out = register_disk_smart_shim()) != 0 //provide fake SMART to userspace
          || (out = register_pmu_shim(current_config.hw_config)) != 0 //this is used as early as mfgBIOS loads (=late)
          || (out = initialize_stealth(&current_config)) != 0 //Should be after any shims to let shims have real stuff
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)
+         || (out = reset_elevator()) != 0 //Cosmetic, can be the last one
+#endif
        )
         goto error_out;
 
@@ -116,7 +122,7 @@ static void __exit cleanup_(void)
 }
 module_exit(cleanup_);
 
-MODULE_AUTHOR("TTG");
+MODULE_AUTHOR("TTG & RROrg");
 MODULE_VERSION(RP_VERSION_STR);
 #endif
 

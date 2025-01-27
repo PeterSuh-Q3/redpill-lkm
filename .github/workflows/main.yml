@@ -128,7 +128,7 @@ jobs:
           makeEnvDeploy "${ROOT_PATH}" "${VERSION}" "${PLATFORM}"
 
           echo "makemodules"
-          makelkms "${ROOT_PATH}" "${VERSION}" "${PLATFORM}" "${ROOT_PATH}/rp-lkms" "${ROOT_PATH}/output"
+          makelkms "${ROOT_PATH}" "${VERSION}" "${PLATFORM}" "${ROOT_PATH}" "${ROOT_PATH}/output"
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4

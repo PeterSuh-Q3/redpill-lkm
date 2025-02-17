@@ -45,9 +45,9 @@ jobs:
           - version: 7.1 
             platform: broadwellntbap
             parm: 'prod-v7'
-          #- version: 7.1 
-          #  platform: bromolow
-          #  parm: 'prod-v7'
+          - version: 7.1 
+            platform: bromolow
+            parm: 'prod-v7'
           - version: 7.1
             platform: denverton
             parm: 'prod-v7'
@@ -70,9 +70,6 @@ jobs:
           - version: 7.2
             platform: apollolake
             parm: 'prod-v7'
-          #- version: 7.2
-          #  platform: braswell
-          #  parm: 'prod-v7'
           - version: 7.2
             platform: broadwell
             parm: 'prod-v7'

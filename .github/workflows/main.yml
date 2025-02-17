@@ -105,7 +105,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Init Env
         run: |
@@ -208,7 +208,7 @@ jobs:
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
 
       - name: Upload to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rp-lkms
           path: |
@@ -242,7 +242,7 @@ jobs:
           sudo timedatectl set-timezone "Asia/Seoul"
 
       - name: Download from Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: rp-lkms
           path: ./rp-lkms
@@ -276,7 +276,7 @@ jobs:
           zip -9 rp-lkms.zip -j rp-lkms/*
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v4
         if: env.VERSION != ''
         with:
           tag_name: ${{ env.VERSION }}

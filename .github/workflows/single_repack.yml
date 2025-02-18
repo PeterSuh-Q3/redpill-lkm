@@ -215,13 +215,13 @@ jobs:
           rm rp-lkms.zip
           zip -9 rp-lkms.zip -j rp-lkms/*
 
-      #- name: Release
-      #  uses: softprops/action-gh-release@v4
-      #  if: env.VERSION != ''
-      #  with:
-      #    tag_name: ${{ env.VERSION }}
-      #    prerelease: ${{ inputs.prerelease }}
-      #    body: |
-      #      ${{ steps.Changelog.outputs.changelog }}
-      #    files: |
-      #      rp-lkms.zip
+      - name: Release
+        uses: softprops/action-gh-release@v4
+        if: env.VERSION != ''
+        with:
+          tag_name: ${{ env.VERSION }}
+          prerelease: ${{ inputs.prerelease }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          files: |
+            rp-lkms.zip

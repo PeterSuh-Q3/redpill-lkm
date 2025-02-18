@@ -276,7 +276,7 @@ jobs:
           zip -9 rp-lkms.zip -j rp-lkms/*
 
       - name: Release
-        uses: softprops/action-gh-release@v4
+        uses: softprops/action-gh-release@v1
         if: env.VERSION != ''
         with:
           tag_name: ${{ env.VERSION }}

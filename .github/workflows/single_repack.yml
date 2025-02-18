@@ -210,15 +210,18 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
+          curl -kLO https://github.com/PeterSuh-Q3/redpill-lkm/releases/latest/download/rp-lkms.zip
+          unzip rp-lkms.zip *.gz -d ./rp-lkms
+          rm rp-lkms.zip
           zip -9 rp-lkms.zip -j rp-lkms/*
 
-      - name: Release
-        uses: softprops/action-gh-release@v4
-        if: env.VERSION != ''
-        with:
-          tag_name: ${{ env.VERSION }}
-          prerelease: ${{ inputs.prerelease }}
-          body: |
-            ${{ steps.Changelog.outputs.changelog }}
-          files: |
-            rp-lkms.zip
+      #- name: Release
+      #  uses: softprops/action-gh-release@v4
+      #  if: env.VERSION != ''
+      #  with:
+      #    tag_name: ${{ env.VERSION }}
+      #    prerelease: ${{ inputs.prerelease }}
+      #    body: |
+      #      ${{ steps.Changelog.outputs.changelog }}
+      #    files: |
+      #      rp-lkms.zip

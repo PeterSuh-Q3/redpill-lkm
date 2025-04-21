@@ -141,7 +141,7 @@ const struct hw_config platformConfig = {
         .psu_status = {HWMON_PSU_NULL_ID},
         .sys_current = {HWMON_SYS_CURR_NULL_ID},
     }};
-#elif defined(RP_PLATFORM_AVATON)
+#elif defined(RP_PLATFORM_AVOTON)
 const struct hw_config platformConfig = {
     .name = "", // "DS1515+, DS1815+, DS415+, DS2415+, RS815+, RS815RP+, RS2416+, RS2416RP+",
     .pci_stubs = {

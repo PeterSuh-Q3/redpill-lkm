@@ -8,9 +8,6 @@
 name: Build lkms avoton 7.1
 
 on:  
-  release:
-    types: [published]
-
   workflow_dispatch:
     inputs:
       version:

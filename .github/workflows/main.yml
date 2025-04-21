@@ -66,6 +66,9 @@ jobs:
           - version: 7.1
             platform: v1000
             parm: 'prod-v7'
+          - version: 7.1 
+            platform: avoton
+            parm: 'prod-v7'
           
           - version: 7.2
             platform: apollolake

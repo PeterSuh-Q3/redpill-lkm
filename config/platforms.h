@@ -27,6 +27,25 @@ const struct hw_config platformConfig = {
         .psu_status = {HWMON_PSU_NULL_ID},
         .sys_current = {HWMON_SYS_CURR_NULL_ID},
     }};
+#el#if defined(RP_PLATFORM_BRASWELL)
+const struct hw_config platformConfig = {
+    .name = "", // "DS216+, DS216+II, DS716+, DS716+II, DS916+, DS416play",
+    .pci_stubs = {
+        {.type = __VPD_TERMINATOR__}},
+    .emulate_rtc = true,
+    .swap_serial = false,
+    .reinit_ttyS0 = true,
+    .fix_disk_led_ctrl = true,
+    .has_cpu_temp = true,
+    .is_dt = false,
+    .hwmon = {
+        .sys_thermal = {HWMON_SYS_TZONE_NULL_ID},
+        .sys_voltage = {HWMON_SYS_VSENS_NULL_ID},
+        .sys_fan_speed_rpm = {HWMON_SYS_FAN_NULL_ID},
+        .hdd_backplane = {HWMON_SYS_HDD_BP_DETECT_ID, HWMON_SYS_HDD_BP_ENABLE_ID},
+        .psu_status = {HWMON_PSU_NULL_ID},
+        .sys_current = {HWMON_SYS_CURR_NULL_ID},
+    }};
 #elif defined(RP_PLATFORM_BROADWELL)
 const struct hw_config platformConfig = {
     .name = "", // "DS3617xs DS3617xsII RS3617RPxs RS3617xs+ RS4017xs+ RS18017xs+ RS3618xs FS2017 FS3400",

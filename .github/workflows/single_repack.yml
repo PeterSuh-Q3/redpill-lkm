@@ -15,7 +15,7 @@
 #   - version: "7.2"
 #     platform: "broadwell"
 
-name: Build lkms single
+name: Build lkms single not
 
 on:
   workflow_dispatch:

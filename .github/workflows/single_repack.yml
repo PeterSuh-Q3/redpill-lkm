@@ -35,9 +35,9 @@ jobs:
       matrix:
         include:
           - version: 7.1 
-            platform: bromolow
+            platform: braswell
             parm: 'prod-v7'
-
+            
     runs-on: ubuntu-latest
 
     steps:

@@ -48,7 +48,7 @@ jobs:
          run: |
            git config --global user.email "github-actions[bot]@users.noreply.github.com"
            git config --global user.name "github-actions[bot]"
-           sudo timedatectl set-timezone "Asia/Shanghai"
+           sudo timedatectl set-timezone "Asia/Seoul"
  
        # - name: Cache EnvDeploy
        #   id: cache-env
@@ -121,8 +121,9 @@ jobs:
            sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
            while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
            mkdir -p /source/output
- 
-           repo=${{ github.server_url }}/${{ github.repository }}
+
+           repo="https://github.com/RROrg/rr-lkms"
+           #repo=${{ github.server_url }}/${{ github.repository }}
            # 5.10.55 Temporary use of https://github.com/XPEnology-Community/redpill-lkm5
            # And currently only USB OK, @jim3ma is adapting to 7.2.
            [ "${KVER:0:1}" = "5" ] && repo=https://github.com/PeterSuh-Q3/redpill-lkm5

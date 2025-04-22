@@ -34,8 +34,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 6.2
-            platform: braswell
+          - version: 7.1
+            platform: cedarview
             parm: 'prod-v7'
             
     runs-on: ubuntu-latest

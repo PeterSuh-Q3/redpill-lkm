@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms avoton 7.1
+name: Build lkms braswell 7.1, 7.2
 
 on:  
   workflow_dispatch:
@@ -25,9 +25,9 @@ jobs:
       matrix:
         include:
           - version: 7.1 
-            platform: avoton
+            platform: braswell
             parm: 'prod-v7'
-          - version: 7.1 
+          - version: 7.2 
             platform: braswell
             parm: 'prod-v7'
 

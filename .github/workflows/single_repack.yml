@@ -39,189 +39,182 @@ jobs:
             parm: 'prod-v7'
             
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Init Env
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          sudo timedatectl set-timezone "Asia/Seoul"
-
-      - name: Get EnvDeploy
-        run: |
-          ROOT_PATH=${{ github.workspace }}
-          VERSION=${{ matrix.version }}
-          PLATFORM=${{ matrix.platform }}
-
-          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
-          cd ${ROOT_PATH}/pkgscripts-ng
-          # if version == 6.2, checkout 6.2.4
-          git checkout DSM$VERSION`[ "$VERSION" = "6.2" ] && echo ".4"`
-          sudo ./EnvDeploy -v $VERSION`[ "$VERSION" = "6.2" ] && echo ".4"` -l  # Get Available platforms
-          sudo ./EnvDeploy -q -v $VERSION -p $PLATFORM
-
-          # Fault tolerance of pkgscripts-ng
-          if [[ "$PLATFORM" == "broadwellntbap" && "$VERSION" == "7.1" ]]; then
-            sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ROOT_PATH}/pkgscripts-ng/include/platforms
-          fi
-
-          #ENV
-          mkdir -p ${ROOT_PATH}/source
-
-          ENV_PATH=${ROOT_PATH}/build_env/ds.$PLATFORM-$VERSION
-          sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
-
-          sudo chroot ${ENV_PATH} << "EOF"
-          cd pkgscripts
-
-          version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
-          sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
-          ./SynoBuild -c -p ${{ matrix.platform }}
-
-          while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
-          if [ -f "${KSRC}/Makefile" ]; then
-            # gcc issue "unrecognized command-line option '--param=allow-store-data-races=0'".
-            [ "${{ matrix.version }}" == "7.2" ] && sed -i 's/--param=allow-store-data-races=0/--allow-store-data-races/g' ${KSRC}/Makefile
-
-            KVERSION=`cat ${KSRC}/Makefile | grep ^VERSION | awk -F' ' '{print $3}'`
-            PATCHLEVEL=`cat ${KSRC}/Makefile | grep ^PATCHLEVEL | awk -F' ' '{print $3}'`
-            SUBLEVEL=`cat ${KSRC}/Makefile | grep ^SUBLEVEL | awk -F' ' '{print $3}'`
-            [ -f "/env32.mak" ] && echo "KVER=${KVERSION}.${PATCHLEVEL}.${SUBLEVEL}" >> /env32.mak
-            [ -f "/env64.mak" ] && echo "KVER=${KVERSION}.${PATCHLEVEL}.${SUBLEVEL}" >> /env64.mak
-            CCVER=`$CC --version | head -n 1 | awk -F' ' '{print $3}'`
-            [ -f "/env32.mak" ] && echo "CCVER=${CCVER}" >> /env32.mak
-            [ -f "/env64.mak" ] && echo "CCVER=${CCVER}" >> /env64.mak
-          fi
-          EOF
-
-          [ -f ${ENV_PATH}/env64.mak ] && ENV_FILE=${ENV_PATH}/env64.mak || ([ -f ${ENV_PATH}/env32.mak ] && ENV_FILE=${ENV_PATH}/env32.mak)
-          if [ -n "${ENV_FILE}" ]; then
-            KVER=`grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}'`
-            CCVER=`grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}'`
-            [ -n "${KVER}" ] && echo "KVER=${KVER}" >> $GITHUB_ENV
-            [ -n "${CCVER}" ] && echo "CCVER=${CCVER}" >> $GITHUB_ENV
-          fi
-
-      - name: Make LKMs
-        run: |
-          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
-          sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
-          while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
-          mkdir -p /source/output
-
-          repo=${{ github.server_url }}/${{ github.repository }}
-          # 5.10.55 Temporary use of https://github.com/XPEnology-Community/redpill-lkm5
-          # And currently only USB OK, @jim3ma is adapting to 7.2.
-          [ "${KVER:0:1}" = "5" ] && repo=https://github.com/AuxXxilium/redpill-lkm5
-
-          git clone -c http.sslVerify=false ${repo} /source/input
-          cd /source/input
-          [ -z "`grep 'env.mak' Makefile`" ] && sed -i '1 i include /env.mak' Makefile
-          array=(${{ matrix.parm }})
-          for a in ${array[@]}; do
-            PLATFORM="${{ matrix.platform }}" make -j$(nproc) CC="${CC}" "${a}"
-            if [ -f redpill.ko ]; then
-              strip -g redpill.ko    # Discard symbols from object files. 
-              RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
-              gzip redpill.ko
-              if [ "${{ matrix.platform }}" = "epyc7002" ]; then
-                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
-              else
-                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
-              fi
-            else
-              echo "error"
-            fi
-            make clean
-          done        
-          ls -al /source/output
-          EOF
-
-          ROOT_PATH=${{ github.workspace }}
-          mkdir -p ${ROOT_PATH}/source
-          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
-
-      - name: Upload to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: rp-lkms
-          path: |
-            ${{ github.workspace }}/source/output/*
-
-      - name: clean
-        # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
-        run: |
-          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
-
-
-  release:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          fetch-depth: 0
-
-      - name: Changelog
-        uses: Bullrich/generate-release-changelog@master
-        id: Changelog
-        env:
-          REPO: ${{ github.repository }}
-
-      - name: Init Env
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          sudo timedatectl set-timezone "Asia/Seoul"
-
-      - name: Download from Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: rp-lkms
-          path: ./rp-lkms
-
-      - name: Calculate Version
-        run: |
-          # Calculate Version
-          VERSION=""
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          else
-            LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
-            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then  # format %y.%-m.$i
-              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
-            else
-              VERSION="`date +'%y.%-m.%-d'`"
-            fi
-          fi
-
-          if [ -n "${VERSION}" ]; then
-            # Modify Source File
-            echo "Version: ${VERSION}"
-            echo "${VERSION}" >VERSION
-            echo "${VERSION}" >"./rp-lkms/VERSION"
-            echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          fi
-
-      - name: Zip Lkms
-        if: env.VERSION != ''
-        run: |
-          curl -kLO https://github.com/PeterSuh-Q3/redpill-lkm/releases/latest/download/rp-lkms.zip
-          unzip rp-lkms.zip *.gz -d ./rp-lkms
-          rm rp-lkms.zip
-          zip -9 rp-lkms.zip -j rp-lkms/*
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: env.VERSION != ''
-        with:
-          tag_name: ${{ env.VERSION }}
-          prerelease: ${{ inputs.prerelease }}
-          body: |
-            ${{ steps.Changelog.outputs.changelog }}
-          files: |
-            rp-lkms.zip
+ 
+     steps:
+       - name: Checkout
+         uses: actions/checkout@main
+ 
+       - name: Init Env
+         run: |
+           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+           git config --global user.name "github-actions[bot]"
+           sudo timedatectl set-timezone "Asia/Shanghai"
+ 
+       # - name: Cache EnvDeploy
+       #   id: cache-env
+       #   uses: actions/cache@v4
+       #   env:
+       #     cache-name: cache-env
+       #   with:
+       #     path: |
+       #       ${{ github.workspace }}/pkgscripts-ng
+       #       ${{ github.workspace }}/build_env
+       #     key: ds.${{ matrix.platform }}-${{ matrix.version }}
+ 
+       - name: Get EnvDeploy
+         # if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
+         run: |
+           ROOT_PATH=${{ github.workspace }}
+ 
+           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
+           cd ${ROOT_PATH}/pkgscripts-ng
+           # if version == 6.2, checkout 6.2.4
+           git checkout DSM${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"`
+           sudo ./EnvDeploy -v ${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"` -l  # Get Available platforms
+           sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
+ 
+           # Fault tolerance of pkgscripts-ng
+           if [ "${{ matrix.platform }}" == "broadwellntbap" -a "${{ matrix.version }}" == "7.1" ]; then
+             sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ROOT_PATH}/pkgscripts-ng/include/platforms
+           fi
+ 
+           #ENV
+           mkdir -p ${ROOT_PATH}/source
+ 
+           ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
+           sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
+ 
+           sudo chroot ${ENV_PATH} << "EOF"
+           cd pkgscripts
+ 
+           version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
+           sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
+           ./SynoBuild -c -p ${{ matrix.platform }}
+ 
+           while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
+           if [ -f "${KSRC}/Makefile" ]; then
+             # gcc issue "unrecognized command-line option '--param=allow-store-data-races=0'".
+             [ "${{ matrix.version }}" == "7.2" ] && sed -i 's/--param=allow-store-data-races=0/--allow-store-data-races/g' ${KSRC}/Makefile
+ 
+             VERSION=`cat ${KSRC}/Makefile | grep ^VERSION | awk -F' ' '{print $3}'`
+             PATCHLEVEL=`cat ${KSRC}/Makefile | grep ^PATCHLEVEL | awk -F' ' '{print $3}'`
+             SUBLEVEL=`cat ${KSRC}/Makefile | grep ^SUBLEVEL | awk -F' ' '{print $3}'`
+             [ -f "/env32.mak" ] && echo "KVER=${VERSION}.${PATCHLEVEL}.${SUBLEVEL}" >> /env32.mak
+             [ -f "/env64.mak" ] && echo "KVER=${VERSION}.${PATCHLEVEL}.${SUBLEVEL}" >> /env64.mak
+             CCVER=`$CC --version | head -n 1 | awk -F' ' '{print $3}'`
+             [ -f "/env32.mak" ] && echo "CCVER=${CCVER}" >> /env32.mak
+             [ -f "/env64.mak" ] && echo "CCVER=${CCVER}" >> /env64.mak
+           fi
+           EOF
+ 
+           [ -f ${ENV_PATH}/env64.mak ] && ENV_FILE=${ENV_PATH}/env64.mak || ([ -f ${ENV_PATH}/env32.mak ] && ENV_FILE=${ENV_PATH}/env32.mak)
+           if [ -n "${ENV_FILE}" ]; then
+             KVER=`grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}'`
+             CCVER=`grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}'`
+             [ -n "${KVER}" ] && echo "KVER=${KVER}" >> $GITHUB_ENV
+             [ -n "${CCVER}" ] && echo "CCVER=${CCVER}" >> $GITHUB_ENV
+           fi
+ 
+       - name: Make lkms
+         run: |
+           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
+           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
+           while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
+           mkdir -p /source/output
+ 
+           repo=${{ github.server_url }}/${{ github.repository }}
+           # 5.10.55 Temporary use of https://github.com/XPEnology-Community/redpill-lkm5
+           # And currently only USB OK, @jim3ma is adapting to 7.2.
+           [ "${KVER:0:1}" = "5" ] && repo=https://github.com/wjz304/redpill-lkm5
+ 
+           git clone -c http.sslVerify=false ${repo} /source/input
+           cd /source/input
+           [ -z "`grep 'env.mak' Makefile`" ] && sed -i '1 i include /env.mak' Makefile
+           array=(${{ matrix.parm }})
+           for a in ${array[@]}
+           do
+             make ${a}
+             if [ -f redpill.ko ]; then
+               strip -g redpill.ko    # Discard symbols from object files. 
+               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
+               gzip redpill.ko
+               if [ "${{ matrix.platform }}" = "epyc7002" ]; then
+                 mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+               else
+                 mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+               fi
+             else
+               echo "error"
+             fi
+             make clean
+           done        
+           ls -al /source/output
+           EOF
+ 
+           ROOT_PATH=${{ github.workspace }}
+           mkdir -p ${ROOT_PATH}/source
+           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
+ 
+       - name: Upload to Artifacts
+         uses: actions/upload-artifact@v4
+         with:
+           name: rp-lkms
+           path: |
+             ${{ github.workspace }}/source/output/*
+ 
+       - name: clean
+         # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
+         run: |
+           sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
+ 
+   release:
+     runs-on: ubuntu-latest
+     needs: build
+     steps:
+       - name: Checkout
+         uses: actions/checkout@main
+ 
+       - name: Calculate version
+         run: |
+           # Calculate version
+           VERSION=""
+           if [[ "${{ github.event_name }}" =~ ^(push|release)$ && "${{ github.ref_type }}" == 'tag' ]]; then
+             VERSION="${{ github.ref_name }}"
+           elif [ -n "${{ inputs.version }}" ]; then
+             if [ "`echo ${{ inputs.version }} | cut -d '.' -f 1,2`" = "`date +'%y.%-m'`" ]; then
+               VERSION="${{ inputs.version }}"
+             else
+               LATEST_TAG="`curl -skL "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r ".[0].tag_name" 2>/dev/null`"
+               if [ -n "${LATEST_TAG}" -a "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m'`" ]; then  # format %y.%-m.$i
+                 VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
+               else
+                 VERSION="`date +'%y.%-m'`.0"
+               fi
+             fi
+           else
+             VERSION=""
+           fi
+ 
+           echo "VERSION: ${VERSION}"
+           echo "VERSION=${VERSION}" >> $GITHUB_ENV
+ 
+       - name: download to artifacts
+         if: env.VERSION != ''
+         uses: actions/download-artifact@v4
+         with:
+           name: rp-lkms
+           path: ./rp-lkms
+ 
+       - name: Zip lkms
+         if: env.VERSION != ''
+         run: |
+           echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
+           zip -9 rp-lkms.zip -j rp-lkms/*
+ 
+       - name: Release
+         uses: softprops/action-gh-release@v1
+         if: env.VERSION != ''
+         with:
+           tag_name: ${{ env.VERSION }}
+           prerelease: ${{ inputs.prerelease }}
+           files: rp-lkms.zip

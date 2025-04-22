@@ -28,7 +28,7 @@ jobs:
           #  platform: avoton
           #  parm: 'prod-v7'
           - version: 7.1
-            platform: cedarview
+            platform: braswell
             parm: 'prod-v7'
 
     runs-on: ubuntu-latest

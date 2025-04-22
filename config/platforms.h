@@ -27,28 +27,47 @@ const struct hw_config platformConfig = {
         .psu_status = {HWMON_PSU_NULL_ID},
         .sys_current = {HWMON_SYS_CURR_NULL_ID},
     }};
-#elif defined(RP_PLATFORM_BRASWELL)
+#elif defined(RP_PLATFORM_BROADWELL)
 const struct hw_config platformConfig = {
-    .name = "", // "DS216+, DS216+II, DS716+, DS716+II, DS916+, DS416play",
+    .name = "", // "DS3617xs DS3617xsII RS3617RPxs RS3617xs+ RS4017xs+ RS18017xs+ RS3618xs FS2017 FS3400",
     .pci_stubs = {
         {.type = __VPD_TERMINATOR__}},
-    .emulate_rtc = true,
+    .emulate_rtc = false,
+    .swap_serial = false,
+    .reinit_ttyS0 = true,
+    .fix_disk_led_ctrl = false,
+    .has_cpu_temp = true,
+    .is_dt = false,
+    .hwmon = {
+        .sys_thermal = {HWMON_SYS_TZONE_REMOTE1_ID, HWMON_SYS_TZONE_LOCAL_ID, HWMON_SYS_TZONE_REMOTE2_ID},
+        .sys_voltage = {HWMON_SYS_VSENS_VCC_ID, HWMON_SYS_VSENS_VPP_ID, HWMON_SYS_VSENS_V33_ID, HWMON_SYS_VSENS_V5_ID, HWMON_SYS_VSENS_V12_ID},
+        .sys_fan_speed_rpm = {HWMON_SYS_FAN1_ID, HWMON_SYS_FAN2_ID},
+        .hdd_backplane = {HWMON_SYS_HDD_BP_NULL_ID},
+        .psu_status = {HWMON_PSU_NULL_ID},
+        .sys_current = {HWMON_SYS_CURR_NULL_ID},
+    }};
+#elif defined(RP_PLATFORM_AVOTON)
+const struct hw_config platformConfig = {
+    .name = "", // "DS1515+, DS1815+, DS415+, DS2415+, RS815+, RS815RP+, RS2416+, RS2416RP+",
+    .pci_stubs = {
+        {.type = __VPD_TERMINATOR__}},
+    .emulate_rtc = false,
     .swap_serial = false,
     .reinit_ttyS0 = true,
     .fix_disk_led_ctrl = true,
     .has_cpu_temp = true,
     .is_dt = false,
     .hwmon = {
-        .sys_thermal = {HWMON_SYS_TZONE_NULL_ID},
-        .sys_voltage = {HWMON_SYS_VSENS_NULL_ID},
-        .sys_fan_speed_rpm = {HWMON_SYS_FAN_NULL_ID},
-        .hdd_backplane = {HWMON_SYS_HDD_BP_DETECT_ID, HWMON_SYS_HDD_BP_ENABLE_ID},
+        .sys_thermal = {HWMON_SYS_TZONE_REMOTE1_ID, HWMON_SYS_TZONE_LOCAL_ID, HWMON_SYS_TZONE_REMOTE2_ID},
+        .sys_voltage = {HWMON_SYS_VSENS_VCC_ID, HWMON_SYS_VSENS_VPP_ID, HWMON_SYS_VSENS_V33_ID, HWMON_SYS_VSENS_V5_ID, HWMON_SYS_VSENS_V12_ID},
+        .sys_fan_speed_rpm = {HWMON_SYS_FAN1_ID, HWMON_SYS_FAN2_ID},
+        .hdd_backplane = {HWMON_SYS_HDD_BP_NULL_ID},
         .psu_status = {HWMON_PSU_NULL_ID},
         .sys_current = {HWMON_SYS_CURR_NULL_ID},
     }};
-#elif defined(RP_PLATFORM_BROADWELL)
+#elif defined(RP_PLATFORM_BRASWELL)
 const struct hw_config platformConfig = {
-    .name = "", // "DS3617xs DS3617xsII RS3617RPxs RS3617xs+ RS4017xs+ RS18017xs+ RS3618xs FS2017 FS3400",
+    .name = "", // "DS216+, DS216+II, DS716+, DS716+II, DS916+, DS416play",
     .pci_stubs = {
         {.type = __VPD_TERMINATOR__}},
     .emulate_rtc = false,
@@ -163,25 +182,6 @@ const struct hw_config platformConfig = {
 #elif defined(RP_PLATFORM_DENVERTON)
 const struct hw_config platformConfig = {
     .name = "", // "DS1618+ RS2418+ RS2418RP+ RS2818RP+ DS1819+ DS2419+ DS2419+II DVA3219 RS820+ RS820RP+ DVA3221",
-    .pci_stubs = {
-        {.type = __VPD_TERMINATOR__}},
-    .emulate_rtc = false,
-    .swap_serial = false,
-    .reinit_ttyS0 = true,
-    .fix_disk_led_ctrl = true,
-    .has_cpu_temp = true,
-    .is_dt = false,
-    .hwmon = {
-        .sys_thermal = {HWMON_SYS_TZONE_REMOTE1_ID, HWMON_SYS_TZONE_LOCAL_ID, HWMON_SYS_TZONE_REMOTE2_ID},
-        .sys_voltage = {HWMON_SYS_VSENS_VCC_ID, HWMON_SYS_VSENS_VPP_ID, HWMON_SYS_VSENS_V33_ID, HWMON_SYS_VSENS_V5_ID, HWMON_SYS_VSENS_V12_ID},
-        .sys_fan_speed_rpm = {HWMON_SYS_FAN1_ID, HWMON_SYS_FAN2_ID},
-        .hdd_backplane = {HWMON_SYS_HDD_BP_NULL_ID},
-        .psu_status = {HWMON_PSU_NULL_ID},
-        .sys_current = {HWMON_SYS_CURR_NULL_ID},
-    }};
-#elif defined(RP_PLATFORM_AVOTON)
-const struct hw_config platformConfig = {
-    .name = "", // "DS1515+, DS1815+, DS415+, DS2415+, RS815+, RS815RP+, RS2416+, RS2416RP+",
     .pci_stubs = {
         {.type = __VPD_TERMINATOR__}},
     .emulate_rtc = false,

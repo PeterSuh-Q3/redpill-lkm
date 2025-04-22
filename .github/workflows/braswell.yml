@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms braswell 7.0 7.1, 7.2
+name: Build lkms single
 
 on:  
   workflow_dispatch:
@@ -25,7 +25,10 @@ jobs:
       matrix:
         include:
           - version: 7.1
-            platform: avaton
+            platform: avoton
+            parm: 'prod-v7'
+          - version: 7.1
+            platform: cedarview
             parm: 'prod-v7'
 
     runs-on: ubuntu-latest

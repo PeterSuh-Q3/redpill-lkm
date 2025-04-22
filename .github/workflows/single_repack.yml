@@ -35,8 +35,11 @@ jobs:
       matrix:
         include:
           - version: 7.1
-            platform: cedarview
+            platform: avoton
             parm: 'prod-v7'
+          #- version: 7.1
+          #  platform: cedarview
+          #  parm: 'prod-v7'
             
     runs-on: ubuntu-latest
  
@@ -122,8 +125,7 @@ jobs:
            while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
            mkdir -p /source/output
 
-           repo=https://github.com/RROrg/rr-lkms
-           #repo=${{ github.server_url }}/${{ github.repository }}
+           repo=${{ github.server_url }}/${{ github.repository }}
            # 5.10.55 Temporary use of https://github.com/XPEnology-Community/redpill-lkm5
            # And currently only USB OK, @jim3ma is adapting to 7.2.
            [ "${KVER:0:1}" = "5" ] && repo=https://github.com/PeterSuh-Q3/redpill-lkm5

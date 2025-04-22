@@ -24,9 +24,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1
-            platform: avoton
-            parm: 'prod-v7'
+          #- version: 7.1
+          #  platform: avoton
+          #  parm: 'prod-v7'
           - version: 7.1
             platform: cedarview
             parm: 'prod-v7'

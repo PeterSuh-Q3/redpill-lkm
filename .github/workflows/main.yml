@@ -30,9 +30,12 @@ jobs:
           - version: 7.1 
             platform: apollolake
             parm: 'prod-v7'
-          #- version: 7.1
-          #  platform: braswell
-          #  parm: 'prod-v7'
+          - version: 7.1 
+            platform: avoton
+            parm: 'prod-v7'
+          - version: 7.1
+            platform: braswell
+            parm: 'prod-v7'
           - version: 7.1
             platform: broadwell
             parm: 'prod-v7'
@@ -72,6 +75,9 @@ jobs:
           
           - version: 7.2
             platform: apollolake
+            parm: 'prod-v7'
+          - version: 7.2
+            platform: braswell
             parm: 'prod-v7'
           - version: 7.2
             platform: broadwell

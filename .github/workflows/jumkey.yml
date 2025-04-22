@@ -15,7 +15,7 @@ jobs:
 
       - name: Cache DSM Toolchains
         id: cache-dsm-toolchains
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-dsm-toolchains
         with:

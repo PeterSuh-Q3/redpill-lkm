@@ -21,22 +21,22 @@ function makeEnvDeploy() {
   if [ ! -d "${ROOT_PATH}/pkgscripts-ng" ]; then
     git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
   fi
-  pushd "${ROOT_PATH}/pkgscripts-ng"
+  pushd "${ROOT_PATH}/pkgscripts-ng" || exit 1
   git reset --hard
   git pull
   # if VERSION == 6.2, checkout 6.2.4
-  git checkout DSM${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")
-  sudo ./EnvDeploy -v ${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4") -l # Get Available PLATFORMs
-  sudo ./EnvDeploy -q -v ${VERSION} -p ${PLATFORM}
+  git checkout "DSM${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")"
+  sudo ./EnvDeploy -v "${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")" -l # Get Available PLATFORMs
+  sudo ./EnvDeploy -q -v "${VERSION}" -p "${PLATFORM}"
   RET=$?
-  popd
+  popd || exit 1
   [ ${RET} -ne 0 ] && echo "EnvDeploy failed." && return 1
 
   ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
   sudo cp -al "${ROOT_PATH}/pkgscripts-ng" "${ENV_PATH}/"
 
   # Fault tolerance of pkgscripts-ng
-  if [ "${PLATFORM}" == "broadwellntbap" -a "${VERSION}" == "7.1" ]; then
+  if [ "${PLATFORM}" == "broadwellntbap" ] && [ "${VERSION}" == "7.1" ]; then
     sudo sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ENV_PATH}/pkgscripts-ng/include/platforms
   fi
 
@@ -79,8 +79,8 @@ function getKver() {
   ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
   [ ! -d "${ENV_PATH}" ] && echo "ds.${PLATFORM}-${VERSION} not exist." && return 1
 
-  BUILD_ARCH=$(cat ${ENV_PATH}/root/.bashrc 2>/dev/null | grep BUILD_ARCH | awk -F'=' '{print $2}' | sed "s/'//g")
-  KVER=$(cat ${ENV_PATH}/env${BUILD_ARCH}.mak 2>/dev/null | grep KVER | awk -F'=' '{print $2}')
+  BUILD_ARCH=$(cat "${ENV_PATH}/root/.bashrc" 2>/dev/null | grep BUILD_ARCH | awk -F'=' '{print $2}' | sed "s/'//g")
+  KVER=$(cat "${ENV_PATH}/env${BUILD_ARCH}.mak" 2>/dev/null | grep KVER | awk -F'=' '{print $2}')
   echo "${KVER}"
   return 0
 }

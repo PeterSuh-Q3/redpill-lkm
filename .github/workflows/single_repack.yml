@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.2 
+          - version: 7.1 
             platform: braswell
             parm: 'prod-v7'
             

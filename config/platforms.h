@@ -27,7 +27,7 @@ const struct hw_config platformConfig = {
         .psu_status = {HWMON_PSU_NULL_ID},
         .sys_current = {HWMON_SYS_CURR_NULL_ID},
     }};
-#el#if defined(RP_PLATFORM_BRASWELL)
+#elif defined(RP_PLATFORM_BRASWELL)
 const struct hw_config platformConfig = {
     .name = "", // "DS216+, DS216+II, DS716+, DS716+II, DS916+, DS416play",
     .pci_stubs = {

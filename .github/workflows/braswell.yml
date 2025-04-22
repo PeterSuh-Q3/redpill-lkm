@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms braswell 7.1, 7.2
+name: Build lkms braswell 7.0 7.1, 7.2
 
 on:  
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1 
+          - version: 7.0
             platform: braswell
             parm: 'prod-v7'
 

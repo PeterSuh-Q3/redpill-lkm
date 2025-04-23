@@ -24,11 +24,11 @@ jobs:
     strategy:
       matrix:
         include:
-          #- version: 7.1
-          #  platform: avoton
-          #  parm: 'prod-v7'
           - version: 7.1
-            platform: braswell
+            platform: evansport
+            parm: 'prod-v7'
+          - version: 7.1
+            platform: grantley
             parm: 'prod-v7'
 
     runs-on: ubuntu-latest

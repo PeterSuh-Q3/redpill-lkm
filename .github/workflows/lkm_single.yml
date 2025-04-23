@@ -27,7 +27,7 @@ jobs:
           #- version: 7.1
           #  platform: evansport
           #  parm: 'prod-v7'
-          - version: 7.1
+          - version: 7.2
             platform: grantley
             parm: 'prod-v7'
 

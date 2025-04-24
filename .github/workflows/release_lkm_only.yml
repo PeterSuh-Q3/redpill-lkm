@@ -19,8 +19,7 @@ on:
         default: false
         type: boolean
 
-
-  release:
+  jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:

@@ -212,13 +212,13 @@ void reset_bios_shims(void)
  * Only purley and epyc7002 not set CONFIG_SYNO_SATA_DISK_LED_CONTROL.
  * So only FS6400, HD6500, SA6400 now
  */
-#if !defined(CONFIG_SYNO_V1000NK) && !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
+#if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
 static override_symbol_inst *ov_funcSYNOSATADiskLedCtrl = NULL;
 #endif
 static override_symbol_inst *ov_syno_ahci_disk_led_enable = NULL;
 static override_symbol_inst *ov_syno_ahci_disk_led_enable_by_port = NULL;
 
-#if !defined(CONFIG_SYNO_V1000NK) && !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
+#if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
 /******************************** Kernel-level shims related to mfgBIOS functionality *********************************/
 extern void *funcSYNOSATADiskLedCtrl; // if this explodes one day we need to do kernel_has_symbol() on it dynamically
 
@@ -252,7 +252,7 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
     pr_loc_dbg("Shimming disk led control API");
 
     int out;
-#if !defined(CONFIG_SYNO_V1000NK) && !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
+#if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
     // funcSYNOSATADiskLedCtrl exists on (almost?) all platforms, but it's null on some... go figure ;)
     if (funcSYNOSATADiskLedCtrl)
     {
@@ -302,7 +302,7 @@ int unshim_disk_leds_ctrl(void)
     int out;
     bool failed = false;
 
-#if !defined(CONFIG_SYNO_V1000NK) && !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
+#if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
     if (ov_funcSYNOSATADiskLedCtrl)
     {
         out = restore_symbol(ov_funcSYNOSATADiskLedCtrl);

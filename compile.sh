@@ -19,7 +19,10 @@ function makeEnvDeploy() {
 
   mkdir -p "${ROOT_PATH}"
   if [ ! -d "${ROOT_PATH}/pkgscripts-ng" ]; then
-    git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
+    git clone https://${TOKEN:+${TOKEN}@}github.com/RROrg/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
+    if [ "${PLATFORM}" == "v1000nk" ]; then
+      sudo "${ROOT_PATH}/pkgscripts-ng/maketoolkit.sh" "${PLATFORM}" "${VERSION}" "${ROOT_PATH}/toolkit_tarballs"
+    fi
   fi
   pushd "${ROOT_PATH}/pkgscripts-ng" || exit 1
   git reset --hard
@@ -35,10 +38,10 @@ function makeEnvDeploy() {
   ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
   sudo cp -al "${ROOT_PATH}/pkgscripts-ng" "${ENV_PATH}/"
 
-  # Fault tolerance of pkgscripts-ng
-  if [ "${PLATFORM}" == "broadwellntbap" ] && [ "${VERSION}" == "7.1" ]; then
-    sudo sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ENV_PATH}/pkgscripts-ng/include/platforms
-  fi
+  # # Fault tolerance of pkgscripts-ng
+  # if [ "${PLATFORM}" == "broadwellntbap" ] && [ "${VERSION}" == "7.1" ]; then
+  #   sudo sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ENV_PATH}/pkgscripts-ng/include/platforms
+  # fi
 
   sudo rm -f script.sh
   cat >script.sh <<"EOF"
@@ -106,7 +109,7 @@ function makelkms() {
 source ~/.bashrc
 sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
 while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done </env${BUILD_ARCH}.mak
-# [ "${2}" = "epyc7002" ] && sed -i 's#\$(Q)\$(MAKE) -f \$(srctree)/scripts/Makefile.modpost#\$(Q)\$(MAKE) -i -f \$(srctree)/scripts/Makefile.modpost#g' ${KSRC}/Makefile
+# [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] || sed -i 's#\$(Q)\$(MAKE) -f \$(srctree)/scripts/Makefile.modpost#\$(Q)\$(MAKE) -i -f \$(srctree)/scripts/Makefile.modpost#g' ${KSRC}/Makefile
 cd /source/
 [ -z "$(grep 'env.mak' Makefile)" ] && sed -i '1 i include /env.mak' Makefile
 VN="v${1:0:1}"
@@ -115,12 +118,12 @@ for a in ${array[@]}; do
   PLATFORM="${2}" make -j$(nproc) CC="${CC}" "${a}"
   if [ -f redpill.ko ]; then
     ${STRIP_ORI} -g redpill.ko # Discard symbols from object files.
-    RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
+    # RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
     gzip redpill.ko
-    if [ "${2}" = "epyc7002" ]; then
-      mv -f ./redpill.ko.gz /output/rp-${2}-${1}-${RPKOVER/+/}-$(echo ${a} | awk -F'-' '{print $1}').ko.gz
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+      mv -f ./redpill.ko.gz /output/rp-${2}-${KVER}-$(echo ${a} | awk -F'-' '{print $1}').ko.gz
     else
-      mv -f ./redpill.ko.gz /output/rp-${2}-${RPKOVER/+/}-$(echo ${a} | awk -F'-' '{print $1}').ko.gz
+      mv -f ./redpill.ko.gz /output/rp-${2}-${1}-${KVER}-$(echo ${a} | awk -F'-' '{print $1}').ko.gz
     fi
   else
     echo "error"

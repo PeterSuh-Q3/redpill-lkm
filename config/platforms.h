@@ -312,6 +312,26 @@ const struct hw_config platformConfig = {
         .psu_status = {HWMON_PSU_NULL_ID},
         .sys_current = {HWMON_SYS_CURR_NULL_ID},
     }};
+#elif defined(RP_PLATFORM_V1000NK)
+const struct hw_config platformConfig = {
+    .name = "", // "DS925+",
+    .pci_stubs = {
+        {.type = __VPD_TERMINATOR__}},
+    .emulate_rtc = true,
+    .swap_serial = false,
+    .reinit_ttyS0 = false,
+    .fix_disk_led_ctrl = true,
+    .has_cpu_temp = true,
+    .is_dt = true,
+    .hwmon = {
+        .sys_thermal = {HWMON_SYS_TZONE_REMOTE1_ID, HWMON_SYS_TZONE_LOCAL_ID, HWMON_SYS_TZONE_REMOTE2_ID},
+        .sys_voltage = {HWMON_SYS_VSENS_VCC_ID, HWMON_SYS_VSENS_VPP_ID, HWMON_SYS_VSENS_V33_ID, HWMON_SYS_VSENS_V5_ID, HWMON_SYS_VSENS_V12_ID},
+        // FIXME add NULL ID to workaroud scemd coredump in SA6400 7.2-64551
+        .sys_fan_speed_rpm = {HWMON_SYS_FAN1_ID, HWMON_SYS_FAN2_ID, HWMON_SYS_FAN_NULL_ID},
+        .hdd_backplane = {HWMON_SYS_HDD_BP_DETECT_ID, HWMON_SYS_HDD_BP_NULL_ID},
+        .psu_status = {HWMON_PSU_NULL_ID},
+        .sys_current = {HWMON_SYS_CURR_NULL_ID},
+    }};
 #elif defined(RP_PLATFORM_EPYC7002)
 const struct hw_config platformConfig = {
     .name = "", // "SA6400",

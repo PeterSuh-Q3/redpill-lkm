@@ -101,6 +101,10 @@ jobs:
 
       - name: Make LKMs
         run: |
+          export ARCH=i386
+          export CROSS_COMPILE=/home/boss/Scrivania/i686-pc-linux-gnu/bin/i686-pc-linux-gnu-
+          make ARCH=i386 modules_prepare
+          
           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
           while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak

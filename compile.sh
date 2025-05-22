@@ -21,7 +21,7 @@ function makeEnvDeploy() {
   if [ ! -d "${ROOT_PATH}/pkgscripts-ng" ]; then
     git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
     #git clone https://${TOKEN:+${TOKEN}@}github.com/RROrg/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
-    #if [ "${PLATFORM}" == "v1000nk" ]; then
+    #if echo "geminilakenk r1000nk v1000nk" | grep -wq "${PLATFORM}"; then
     #  sudo "${ROOT_PATH}/pkgscripts-ng/maketoolkit.sh" "${PLATFORM}" "${VERSION}" "${ROOT_PATH}/toolkit_tarballs"
     #fi
   fi

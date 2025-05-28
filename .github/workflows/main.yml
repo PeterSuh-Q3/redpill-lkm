@@ -109,6 +109,15 @@ jobs:
           - version: 7.2
             platform: v1000
             parm: 'prod-v7'
+          - version: 7.2
+            platform: v1000nk
+            parm: 'prod-v7'
+          - version: 7.2
+            platform: r1000nk
+            parm: 'prod-v7'
+          - version: 7.2
+            platform: geminilakenk
+            parm: 'prod-v7'            
 
     runs-on: ubuntu-latest
 

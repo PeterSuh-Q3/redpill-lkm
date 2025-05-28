@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms single geminilakenk
+name: Build lkms single v1000nk
 
 on:  
   workflow_dispatch:

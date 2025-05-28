@@ -14,8 +14,12 @@ on:
         description: "format %y.%-m.$i or auto"
         required: false
         type: string
-      target:
-        description: "rp-v1000nk-7.2-5.10.55-prod.ko.gz"
+      target1:
+        description: "rp-r1000nk-7.2-5.10.55-prod.ko.gz"
+        required: true
+        type: string
+      target2:
+        description: "rp-geminilakenk-7.2-5.10.55-prod.ko.gz"
         required: true
         type: string
       prerelease:
@@ -70,7 +74,7 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          zip -9 rp-lkms.zip -j ${{ inputs.target }}
+          zip -9 rp-lkms.zip -j ${{ inputs.target1 }} ${{ inputs.target2 }}
 
       - name: Release
         uses: softprops/action-gh-release@v1

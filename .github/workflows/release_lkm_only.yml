@@ -71,11 +71,21 @@ jobs:
             #echo "${VERSION}" >"./rp-lkms/VERSION"
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
           fi
-
+          
       - name: Zip Lkms
-        if: env.VERSION != ''
+        if: env.VERSION != ''      
         run: |
-          zip -9 rp-lkms.zip -j ${{ inputs.target1 }} ${{ inputs.target2 }}
+          echo "## Current Directory: $(pwd)"
+          echo "## Files in workspace:"
+          ls -lR
+          
+          echo "## Target files verification:"
+          file ${{ inputs.target1 }} ${{ inputs.target2 }}
+          
+          echo "## Creating ZIP..."
+          zip -v -9 rp-lkms.zip -j \
+            "${{ inputs.target1 }}" \
+            "${{ inputs.target2 }}"
 
       - name: Release
         uses: softprops/action-gh-release@v1

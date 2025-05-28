@@ -8,6 +8,9 @@
 name: Build lkms single
 
 on:  
+  release:
+    types: [published]
+
   workflow_dispatch:
     inputs:
       version:
@@ -32,7 +35,7 @@ jobs:
             parm: 'prod-v7'
           - version: 7.2
             platform: geminilakenk
-            parm: 'prod-v7'
+            parm: 'prod-v7'            
 
     runs-on: ubuntu-latest
 
@@ -207,14 +210,3 @@ jobs:
         if: env.VERSION != ''
         run: |
           zip -9 rp-lkms.zip -j rp-lkms/*
-
-      #- name: Release
-      #  uses: softprops/action-gh-release@v1
-      #  if: env.VERSION != ''
-      #  with:
-      #    tag_name: ${{ env.VERSION }}
-      #    prerelease: ${{ inputs.prerelease }}
-      #    body: |
-      #      ${{ steps.Changelog.outputs.changelog }}
-      #    files: |
-      #      rp-lkms.zip

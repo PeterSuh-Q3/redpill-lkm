@@ -58,19 +58,6 @@ cd pkgscripts
 [ ${1:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
 sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
 ./SynoBuild -c -p ${2}
-while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done </env${BUILD_ARCH}.mak
-if [ -f "${KSRC}/Makefile" ]; then
-  # gcc issue "unrecognized command-line option '--param=allow-store-data-races=0'".
-  [ "${1}" == "7.2" ] && sed -i 's/--param=allow-store-data-races=0/--allow-store-data-races/g' ${KSRC}/Makefile
-  KVERSION=$(cat ${KSRC}/Makefile | grep ^VERSION | awk -F' ' '{print $3}')
-  PATCHLEVEL=$(cat ${KSRC}/Makefile | grep ^PATCHLEVEL | awk -F' ' '{print $3}')
-  SUBLEVEL=$(cat ${KSRC}/Makefile | grep ^SUBLEVEL | awk -F' ' '{print $3}')
-  [ -f "/env32.mak" ] && echo "KVER=${KVERSION}.${PATCHLEVEL}.${SUBLEVEL}" >>/env32.mak
-  [ -f "/env64.mak" ] && echo "KVER=${KVERSION}.${PATCHLEVEL}.${SUBLEVEL}" >>/env64.mak
-  CCVER=$($CC --version | head -n 1 | awk -F' ' '{print $3}')
-  [ -f "/env32.mak" ] && echo "CCVER=${CCVER}" >>/env32.mak
-  [ -f "/env64.mak" ] && echo "CCVER=${CCVER}" >>/env64.mak
-fi
 EOF
   sudo mv -f script.sh "${ENV_PATH}/script.sh"
   sudo chmod +x "${ENV_PATH}/script.sh"
@@ -94,8 +81,6 @@ function getKver() {
   return 0
 }
 
-getKver
 makeEnvDeploy
 
 exit 0
-

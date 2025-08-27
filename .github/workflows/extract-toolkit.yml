@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.2
-            platform: r1000nk
+          - version: 7.1
+            platform: avoton
 
     runs-on: ubuntu-latest
 
@@ -55,7 +55,7 @@ jobs:
 
           # Inside chroot, tar the cross-compiler directory
           sudo chroot ${ENV_PATH} << "EOF"
-          tar -czf /tmp/linux-gnu-tmp-toolchain.tgz /usr/local/*-linux-gnu/
+          tar -czf /tmp/linux-gnu-tmp-toolchain.tgz /usr/local/x86*-linux-gnu/
           EOF
 
           sudo cp ${ENV_PATH}/tmp/linux-gnu-tmp-toolchain.tgz ${ROOT_PATH}/toolchain-output/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz

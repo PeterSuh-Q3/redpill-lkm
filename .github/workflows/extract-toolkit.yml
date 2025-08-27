@@ -88,7 +88,7 @@ jobs:
           sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
           
           # Run SynoBuild
-          ./SynoBuild -c -p ${{ matrix.platform }}
+          ./SynoBuild -c -p ${{ matrix.platform }} ${{ matrix.platform }}
           
           # List /opt directory to verify SynoBuild results
           echo "Contents of /opt directory:"
@@ -153,10 +153,6 @@ jobs:
           name: synology-toolkit-${{ matrix.platform }}-${{ matrix.version }}
           path: |
             ${{ github.workspace }}/toolkit-output/*
-
-      - name: Clean up
-        run: |
-          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/*
 
   release:
     runs-on: ubuntu-latest

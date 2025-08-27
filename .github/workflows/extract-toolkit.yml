@@ -56,7 +56,7 @@ jobs:
           # Inside chroot, tar the cross-compiler directory
           sudo chroot ${ENV_PATH} << "EOF"
           tar -czf /tmp/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz /usr/local/${PLATFORM}-linux-gnu/
-EOF
+          EOF
 
           sudo cp ${ENV_PATH}/tmp/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz ${ROOT_PATH}/toolchain-output/
           sudo chown $(whoami):$(whoami) ${ROOT_PATH}/toolchain-output/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz

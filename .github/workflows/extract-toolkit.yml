@@ -55,10 +55,10 @@ jobs:
 
           # Inside chroot, tar the cross-compiler directory
           sudo chroot ${ENV_PATH} << "EOF"
-          tar -czf /tmp/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz /usr/local/${PLATFORM}-linux-gnu/
+          tar -czf /tmp/linux-gnu-tmp-toolchain.tgz /usr/local/*-linux-gnu/
           EOF
 
-          sudo cp ${ENV_PATH}/tmp/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz ${ROOT_PATH}/toolchain-output/
+          sudo cp ${ENV_PATH}/tmp/linux-gnu-tmp-toolchain.tgz ${ROOT_PATH}/toolchain-output/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz
           sudo chown $(whoami):$(whoami) ${ROOT_PATH}/toolchain-output/${PLATFORM}-linux-gnu-${VERSION}-toolchain.tgz
 
           echo "Archive created:"

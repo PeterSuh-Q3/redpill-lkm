@@ -28,8 +28,13 @@ function makeEnvDeploy() {
   pushd "${ROOT_PATH}/pkgscripts-ng" || exit 1
   git reset --hard
   git pull
-  # if VERSION == 6.2, checkout 6.2.4
-  git checkout "DSM${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")"
+  if [ "${VERSION}" = "7.1" ]; then
+      git checkout DSM7.1
+  elif [ "${VERSION}" = "7.2" ]; then
+      git checkout DSM7.2
+  else
+      git checkout "DSM${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")"
+  fi  
   sudo ./EnvDeploy -v "${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")" -l # Get Available PLATFORMs
   sudo ./EnvDeploy -q -v "${VERSION}" -p "${PLATFORM}"
   RET=$?

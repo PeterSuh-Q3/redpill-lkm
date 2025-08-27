@@ -75,3 +75,22 @@ EOF
   return 0
 }
 
+function getKver() {
+  ROOT_PATH=$(realpath "${1:-${WORK_PATH}}")
+  VERSION=${2:-"7.2"}
+  PLATFORM=${3:-"epyc7002"}
+
+  ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
+  [ ! -d "${ENV_PATH}" ] && echo "ds.${PLATFORM}-${VERSION} not exist." && return 1
+
+  BUILD_ARCH=$(cat "${ENV_PATH}/root/.bashrc" 2>/dev/null | grep BUILD_ARCH | awk -F'=' '{print $2}' | sed "s/'//g")
+  KVER=$(cat "${ENV_PATH}/env${BUILD_ARCH}.mak" 2>/dev/null | grep KVER | awk -F'=' '{print $2}')
+  echo "${KVER}"
+  return 0
+}
+
+getKver
+makeEnvDeploy
+
+exit 0
+

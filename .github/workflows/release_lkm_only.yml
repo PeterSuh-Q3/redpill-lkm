@@ -7,36 +7,42 @@
 
 name: release lkm only
 
-on:  
+on:
   workflow_dispatch:
     inputs:
       version:
         description: "format %y.%-m.$i or auto"
         required: false
         type: string
+        default: "auto"  # 기본값 설정
       target1:
         description: "rp-r1000nk-7.2-5.10.55-prod.ko.gz"
         required: true
         type: string
+        default: "rp-r1000nk-7.2-5.10.55-prod.ko.gz"  # 기본값 설정
       target2:
         description: "rp-geminilakenk-7.2-5.10.55-prod.ko.gz"
         required: true
         type: string
+        default: "rp-geminilakenk-7.2-5.10.55-prod.ko.gz"  # 기본값 설정
       target3:
         description: "rp-v1000nk-7.2-5.10.55-prod.ko.gz"
         required: true
         type: string
+        default: "rp-v1000nk-7.2-5.10.55-prod.ko.gz"  # 기본값 설정
       target4:
         description: "rp-epyc7002-7.1-5.10.55-prod.ko.gz"
         required: true
         type: string
+        default: "rp-epyc7002-7.1-5.10.55-prod.ko.gz"  # 기본값 설정
       target5:
         description: "rp-epyc7002-7.2-5.10.55-prod.ko.gz"
         required: true
         type: string
+        default: "rp-epyc7002-7.2-5.10.55-prod.ko.gz"  # 기본값 설정
       prerelease:
         description: "pre release"
-        default: false
+        default: false  # 기본값 설정
         type: boolean
 
 jobs:

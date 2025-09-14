@@ -11,10 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "format %y.%-m.$i or auto"
+        description: "format %y.%-m.$i"
         required: false
         type: string
-        default: "auto"  # 기본값 설정
       target1:
         description: "rp-r1000nk-7.2-5.10.55-prod.ko.gz"
         required: true

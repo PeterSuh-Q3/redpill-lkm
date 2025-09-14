@@ -22,6 +22,18 @@ on:
         description: "rp-geminilakenk-7.2-5.10.55-prod.ko.gz"
         required: true
         type: string
+      target3:
+        description: "rp-v1000nk-7.2-5.10.55-prod.ko.gz"
+        required: true
+        type: string
+      target4:
+        description: "rp-epyc7002-7.1-5.10.55-prod.ko.gz"
+        required: true
+        type: string
+      target5:
+        description: "rp-epyc7002-7.2-5.10.55-prod.ko.gz"
+        required: true
+        type: string
       prerelease:
         description: "pre release"
         default: false
@@ -80,12 +92,15 @@ jobs:
           ls -lR
           
           echo "## Target files verification:"
-          file ${{ inputs.target1 }} ${{ inputs.target2 }}
+          file ${{ inputs.target1 }} ${{ inputs.target2 }} ${{ inputs.target3 }} ${{ inputs.target4 }} ${{ inputs.target5 }}
           
           echo "## Creating ZIP..."
           zip -v -9 rp-lkms.zip -j \
             "${{ inputs.target1 }}" \
-            "${{ inputs.target2 }}"
+            "${{ inputs.target2 }}" \
+            "${{ inputs.target3 }}" \
+            "${{ inputs.target4 }}" \
+            "${{ inputs.target5 }}"
 
       - name: Release
         uses: softprops/action-gh-release@v1

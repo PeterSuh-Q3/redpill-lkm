@@ -28,40 +28,7 @@ jobs:
       matrix:
         include:
           - version: 7.3
-            platform: apollolake
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: braswell
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: broadwell
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: broadwellnk
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: broadwellnkv2
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: broadwellntbap
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: denverton
-            parm: 'prod-v7'
-          - version: 7.3
             platform: epyc7002
-            parm: 'prod-v7'
-          - version: 7.3 
-            platform: geminilake
-            parm: 'prod-v7'
-          - version: 7.3 
-            platform: purley
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: r1000
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: v1000
             parm: 'prod-v7'
           - version: 7.3
             platform: v1000nk

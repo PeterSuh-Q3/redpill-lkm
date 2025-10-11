@@ -69,23 +69,54 @@ jobs:
             sudo tar -xzf "${ENV_PATH}/kernel-inject.tar.gz" -C "${ENV_PATH}/kernel-inject"
           fi
 
-          # Patch pkgscripts-ng build include to export KSRC path and use inject headers
+          # Patch pkgscripts-ng include/build to EXPORT "KSRC/LINUX_SRC" at runtime (no early expansion!)
           sudo chroot "${ENV_PATH}" /bin/bash -c '
             set -eux
             cd pkgscripts-ng
-            sed -i "/PLATFORM_FAMILY/a\\\techo \"KSRC=$KERNEL_SEARCH_PATH\" >> \$file\\n\\\techo \"LINUX_SRC=$KERNEL_SEARCH_PATH\" >> \$file" include/build
-            ./SynoBuild -c -p "${{ inputs.platform }}"
-            # export env vars
-            while read -r line; do [ "${line:0:1}" != "#" ] && export "${line%%=*}"="${line#*=}"; done < /env${BUILD_ARCH}.mak || true
-            # GCC param guard
-            if [ -f "${KERNEL_SEARCH_PATH}/Makefile" ] && grep -q -- "--param=allow-store-data-races=0" "${KERNEL_SEARCH_PATH}/Makefile"; then
-              sed -i "s/--param=allow-store-data-races=0/--allow-store-data-races/g" "${KERNEL_SEARCH_PATH}/Makefile"
+            # Insert literal \$KERNEL_SEARCH_PATH so that include/build will echo real value at runtime
+            sed -i "/PLATFORM_FAMILY/a\\\techo \"KSRC=\\\$KERNEL_SEARCH_PATH\" >> \\$file\\n\\\techo \"LINUX_SRC=\\\$KERNEL_SEARCH_PATH\" >> \\$file" include/build
+        
+            # Build base env & generate /env*.mak
+            ./SynoBuild -c -p "epyc7002"
+        
+            # Export env vars (CC, BUILD_ARCH, KERNEL_SEARCH_PATH, etc.)
+            if [ -f "/env\${BUILD_ARCH}.mak" ]; then
+              while read -r line; do
+                [ "\${line:0:1}" != "#" ] && export "\${line%%=*}"="\${line#*=}"
+              done < /env\${BUILD_ARCH}.mak || true
             fi
-            # Inject kernel materials if present
-            if [ -f "/kernel-inject/Module.symvers" ]; then cp -f /kernel-inject/Module.symvers "${KERNEL_SEARCH_PATH}/Module.symvers"; fi
-            if [ -d "/kernel-inject/include" ]; then rsync -a /kernel-inject/include/ "${KERNEL_SEARCH_PATH}/include/"; fi
+        
+            # Derive KSRC: prefer value written by include/build (if any), else fallback to KERNEL_SEARCH_PATH
+            : "\${KSRC:=}"
+            if [ -z "\${KSRC:-}" ]; then
+              : "\${KERNEL_SEARCH_PATH:=}"
+              if [ -n "\${KERNEL_SEARCH_PATH:-}" ]; then
+                export KSRC="\${KERNEL_SEARCH_PATH}"
+              fi
+            fi
+            # Final guard: KSRC must exist and contain Makefile
+            if [ -z "\${KSRC:-}" ] || [ ! -f "\${KSRC}/Makefile" ]; then
+              echo "ERROR: KSRC not resolved or missing Makefile (KSRC=\${KSRC:-unset})" >&2
+              exit 1
+            fi
+        
+            # GCC param guard (handle toolchain variance)
+            if grep -q -- "--param=allow-store-data-races=0" "\${KSRC}/Makefile"; then
+              sed -i "s/--param=allow-store-data-races=0/--allow-store-data-races/g" "\${KSRC}/Makefile"
+            fi
+        
+            # Inject Module.symvers & headers if provided
+            if [ -f "/kernel-inject/Module.symvers" ]; then
+              cp -f /kernel-inject/Module.symvers "\${KSRC}/Module.symvers"
+            fi
+            if [ -d "/kernel-inject/include" ]; then
+              rsync -a /kernel-inject/include/ "\${KSRC}/include/"
+            fi
+        
+            # Export KSRC/LINUX_SRC for subsequent steps
+            echo "KSRC=\${KSRC}" >> /env\${BUILD_ARCH}.mak
+            echo "LINUX_SRC=\${KSRC}" >> /env\${BUILD_ARCH}.mak
           '
-
       - name: Build LKM inside chroot
         run: |
           set -eux

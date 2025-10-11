@@ -59,64 +59,82 @@ jobs:
         run: |
           set -eux
           ENV_PATH="${ENV_PATH}"
+          
           # Copy pkgscripts-ng into chroot
           sudo cp -a pkgscripts-ng "${ENV_PATH}/pkgscripts-ng"
+          
           # Create an inject dir for Module.symvers/headers
           sudo mkdir -p "${ENV_PATH}/kernel-inject"
-          # If URL provided, fetch and extract
-          if [ -n "${{ inputs.module_symvers_headers_url }}" ]; then
-            curl -L --retry 3 -o "${ENV_PATH}/kernel-inject.tar.gz" "${{ inputs.module_symvers_headers_url }}"
+          
+          # If URL provided, fetch and extract (use real >>/&&, not HTML entities)
+          if [ -n "${module_symvers_headers_url:-}" ]; then
+            curl -L --retry 3 -o "${ENV_PATH}/kernel-inject.tar.gz" "${module_symvers_headers_url}"
             sudo tar -xzf "${ENV_PATH}/kernel-inject.tar.gz" -C "${ENV_PATH}/kernel-inject"
+          else
+            echo "No module_symvers_headers_url provided -> skipping kernel-inject fetch"
           fi
-
-          # Patch pkgscripts-ng include/build to EXPORT "KSRC/LINUX_SRC" at runtime (no early expansion!)
+          
+          # Patch + Build inside chroot
           sudo chroot "${ENV_PATH}" /bin/bash -c '
             set -eux
             cd pkgscripts-ng
-            # Insert literal \$KERNEL_SEARCH_PATH so that include/build will echo real value at runtime
-            sed -i "/PLATFORM_FAMILY/a\\\techo \"KSRC=\\\$KERNEL_SEARCH_PATH\" >> \\$file\\n\\\techo \"LINUX_SRC=\\\$KERNEL_SEARCH_PATH\" >> \\$file" include/build
-        
-            # Build base env & generate /env*.mak
+          
+            # Insert lines after "PLATFORM_FAMILY" (literal $KERNEL_SEARCH_PATH and $file)
+            awk '"'"'
+              /PLATFORM_FAMILY/ {
+                print;
+                print "\techo \"KSRC=\\$KERNEL_SEARCH_PATH\" >> \\$file";
+                print "\techo \"LINUX_SRC=\\$KERNEL_SEARCH_PATH\" >> \\$file";
+                next
+              }
+              { print }
+            '"'"' include/build > include/build.new
+            mv include/build.new include/build
+          
             ./SynoBuild -c -p "epyc7002"
-        
-            # Export env vars (CC, BUILD_ARCH, KERNEL_SEARCH_PATH, etc.)
-            if [ -f "/env\${BUILD_ARCH}.mak" ]; then
+          
+            if [ -f "/env${BUILD_ARCH}.mak" ]; then
               while read -r line; do
-                [ "\${line:0:1}" != "#" ] && export "\${line%%=*}"="\${line#*=}"
-              done < /env\${BUILD_ARCH}.mak || true
+                [ "${line:0:1}" != "#" ] && export "${line%%=*}"="${line#*=}"
+              done < /env${BUILD_ARCH}.mak || true
             fi
-        
-            # Derive KSRC: prefer value written by include/build (if any), else fallback to KERNEL_SEARCH_PATH
-            : "\${KSRC:=}"
-            if [ -z "\${KSRC:-}" ]; then
-              : "\${KERNEL_SEARCH_PATH:=}"
-              if [ -n "\${KERNEL_SEARCH_PATH:-}" ]; then
-                export KSRC="\${KERNEL_SEARCH_PATH}"
-              fi
+          
+            : "${KSRC:=}"; : "${KERNEL_SEARCH_PATH:=}"
+            if [ -z "${KSRC:-}" ] && [ -n "${KERNEL_SEARCH_PATH:-}" ]; then
+              export KSRC="${KERNEL_SEARCH_PATH}"
             fi
-            # Final guard: KSRC must exist and contain Makefile
-            if [ -z "\${KSRC:-}" ] || [ ! -f "\${KSRC}/Makefile" ]; then
-              echo "ERROR: KSRC not resolved or missing Makefile (KSRC=\${KSRC:-unset})" >&2
+            if [ -z "${KSRC:-}" ] || [ ! -f "${KSRC}/Makefile" ]; then
+              echo "ERROR: KSRC not resolved or missing Makefile (KSRC=${KSRC:-unset})" >&2
               exit 1
             fi
-        
-            # GCC param guard (handle toolchain variance)
-            if grep -q -- "--param=allow-store-data-races=0" "\${KSRC}/Makefile"; then
-              sed -i "s/--param=allow-store-data-races=0/--allow-store-data-races/g" "\${KSRC}/Makefile"
+          
+            if grep -q -- "--param=allow-store-data-races=0" "${KSRC}/Makefile"; then
+              sed -i "s/--param=allow-store-data-races=0/--allow-store-data-races/g" "${KSRC}/Makefile"
             fi
-        
-            # Inject Module.symvers & headers if provided
+          
+            # Inject kernel materials if present
             if [ -f "/kernel-inject/Module.symvers" ]; then
-              cp -f /kernel-inject/Module.symvers "\${KSRC}/Module.symvers"
+              cp -f /kernel-inject/Module.symvers "${KSRC}/Module.symvers"
             fi
             if [ -d "/kernel-inject/include" ]; then
-              rsync -a /kernel-inject/include/ "\${KSRC}/include/"
+              rsync -a /kernel-inject/include/ "${KSRC}/include/"
             fi
-        
-            # Export KSRC/LINUX_SRC for subsequent steps
-            echo "KSRC=\${KSRC}" >> /env\${BUILD_ARCH}.mak
-            echo "LINUX_SRC=\${KSRC}" >> /env\${BUILD_ARCH}.mak
+          
+            echo "KSRC=${KSRC}"      >> /env${BUILD_ARCH}.mak
+            echo "LINUX_SRC=${KSRC}" >> /env${BUILD_ARCH}.mak
           '
+          
+          # (이후 빌드/검증 스텝에서)
+          # - 5.10 계열은 5.10.55 또는 5.10.55+가 나올 수 있으니 둘 다 허용
+          # - 4.4 계열은 4.4.302+를 체크
+          gunzip -c redpill.ko.gz > /tmp/redpill.ko
+          VMAGIC="$(/sbin/modinfo --field=vermagic /tmp/redpill.ko | awk '{print $1}')"
+          case "$VMAGIC" in
+            4.4.302+|5.10.55|5.10.55+)
+              echo "OK vermagic=$VMAGIC" ;;
+            *)
+              echo "Unexpected vermagic: $VMAGIC"; exit 1 ;;
+          esac
       - name: Build LKM inside chroot
         run: |
           set -eux

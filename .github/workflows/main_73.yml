@@ -75,55 +75,69 @@ jobs:
           fi
           
           # Patch + Build inside chroot
-          sudo chroot "${ENV_PATH}" /bin/bash -c '
-            set -eux
-            cd pkgscripts-ng
-          
-            # Insert lines after "PLATFORM_FAMILY" (literal $KERNEL_SEARCH_PATH and $file)
-            awk '"'"'
-              /PLATFORM_FAMILY/ {
-                print;
-                print "\techo \"KSRC=\\$KERNEL_SEARCH_PATH\" >> \\$file";
-                print "\techo \"LINUX_SRC=\\$KERNEL_SEARCH_PATH\" >> \\$file";
-                next
-              }
-              { print }
-            '"'"' include/build > include/build.new
-            mv include/build.new include/build
-          
-            ./SynoBuild -c -p "epyc7002"
-          
-            if [ -f "/env${BUILD_ARCH}.mak" ]; then
-              while read -r line; do
-                [ "${line:0:1}" != "#" ] && export "${line%%=*}"="${line#*=}"
-              done < /env${BUILD_ARCH}.mak || true
-            fi
-          
-            : "${KSRC:=}"; : "${KERNEL_SEARCH_PATH:=}"
-            if [ -z "${KSRC:-}" ] && [ -n "${KERNEL_SEARCH_PATH:-}" ]; then
-              export KSRC="${KERNEL_SEARCH_PATH}"
-            fi
-            if [ -z "${KSRC:-}" ] || [ ! -f "${KSRC}/Makefile" ]; then
-              echo "ERROR: KSRC not resolved or missing Makefile (KSRC=${KSRC:-unset})" >&2
-              exit 1
-            fi
-          
-            if grep -q -- "--param=allow-store-data-races=0" "${KSRC}/Makefile"; then
-              sed -i "s/--param=allow-store-data-races=0/--allow-store-data-races/g" "${KSRC}/Makefile"
-            fi
-          
-            # Inject kernel materials if present
-            if [ -f "/kernel-inject/Module.symvers" ]; then
-              cp -f /kernel-inject/Module.symvers "${KSRC}/Module.symvers"
-            fi
-            if [ -d "/kernel-inject/include" ]; then
-              rsync -a /kernel-inject/include/ "${KSRC}/include/"
-            fi
-          
-            echo "KSRC=${KSRC}"      >> /env${BUILD_ARCH}.mak
-            echo "LINUX_SRC=${KSRC}" >> /env${BUILD_ARCH}.mak
-          '
-          
+            sudo chroot "${ENV_PATH}" /bin/bash -c '
+              set -eux
+              cd pkgscripts-ng
+            
+              # 0) 커널 프로젝트 열거 비활성화: 커널 빌드 방지
+              #    - Python3 형태: print(" ".join(kernels))
+              #    - Python2 형태: print " ".join(kernels)
+              if grep -qE "print\([\"'\"'\" ]\.join\(kernels\)\)" ProjectDepends.py; then
+                sed -i "s/^[[:space:]]*print(\\" \\".join(kernels))/pass  # disabled by CI/" ProjectDepends.py
+              fi
+              if grep -qE "print[[:space:]]+[\"'\"'\" ].join\(kernels\)" ProjectDepends.py; then
+                sed -i "s/^[[:space:]]*print[[:space:]]\+\\" \\".join(kernels)/pass  # disabled by CI/" ProjectDepends.py
+              fi
+            
+              # 1) include/build에 KSRC/LINUX_SRC echo 라인 삽입 (리터럴 \$ 유지)
+              awk '"'"'
+                /PLATFORM_FAMILY/ {
+                  print;
+                  print "\techo \"KSRC=\\$KERNEL_SEARCH_PATH\" >> \\$file";
+                  print "\techo \"LINUX_SRC=\\$KERNEL_SEARCH_PATH\" >> \\$file";
+                  next
+                }
+                { print }
+              '"'"' include/build > include/build.new
+              mv include/build.new include/build
+            
+              # 2) 베이스 env 생성 및 /env*.mak 산출
+              ./SynoBuild -c -p "epyc7002"
+            
+              # 3) /env*.mak 변수 export (CC, BUILD_ARCH, KERNEL_SEARCH_PATH 등)
+              if [ -f "/env${BUILD_ARCH}.mak" ]; then
+                while read -r line; do
+                  [ "${line:0:1}" != "#" ] && export "${line%%=*}"="${line#*=}"
+                done < /env${BUILD_ARCH}.mak || true
+              fi
+            
+              # 4) KSRC 결정 (include/build에서 기록된 값 또는 KERNEL_SEARCH_PATH로 폴백)
+              : "${KSRC:=}"; : "${KERNEL_SEARCH_PATH:=}"
+              if [ -z "${KSRC:-}" ] && [ -n "${KERNEL_SEARCH_PATH:-}" ]; then
+                export KSRC="${KERNEL_SEARCH_PATH}"
+              fi
+              if [ -z "${KSRC:-}" ] || [ ! -f "${KSRC}/Makefile" ]; then
+                echo "ERROR: KSRC not resolved or missing Makefile (KSRC=${KSRC:-unset})" >&2
+                exit 1
+              fi
+            
+              # 5) GCC 플래그 가드 (토큰 존재시에만 교체)
+              if grep -q -- "--param=allow-store-data-races=0" "${KSRC}/Makefile"; then
+                sed -i "s/--param=allow-store-data-races=0/--allow-store-data-races/g" "${KSRC}/Makefile"
+              fi
+            
+              # 6) Module.symvers / headers 주입 (있을 때만)
+              if [ -f "/kernel-inject/Module.symvers" ]; then
+                cp -f /kernel-inject/Module.symvers "${KSRC}/Module.symvers"
+              fi
+              if [ -d "/kernel-inject/include" ]; then
+                rsync -a /kernel-inject/include/ "${KSRC}/include/"
+              fi
+            
+              # 7) 이후 스텝에서도 KSRC 사용 가능하도록 persist
+              echo "KSRC=${KSRC}"      >> /env${BUILD_ARCH}.mak
+              echo "LINUX_SRC=${KSRC}" >> /env${BUILD_ARCH}.mak
+            '          
           # (이후 빌드/검증 스텝에서)
           # - 5.10 계열은 5.10.55 또는 5.10.55+가 나올 수 있으니 둘 다 허용
           # - 4.4 계열은 4.4.302+를 체크

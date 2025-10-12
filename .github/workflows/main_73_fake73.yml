@@ -186,14 +186,13 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms
-          path: |
-            ${{ github.workspace }}/source/output/*
+          name: rp-lkms-${{ matrix.platform }}-${{ matrix.version }}
+          path: ${{ github.workspace }}/source/output/*
           if-no-files-found: warn
           compression-level: 6
           overwrite: false
           include-hidden-files: false
-
+    
       - name: clean
         # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
         run: |

@@ -170,7 +170,7 @@ jobs:
               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
               gzip redpill.ko
               if [ "${{ matrix.platform }}" = "epyc7002" ]; then
-                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-7.2-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
               else
                 mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
               fi
@@ -184,7 +184,7 @@ jobs:
 
           ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source
-          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
+          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-7.2/source/output ${ROOT_PATH}/source/
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
@@ -196,7 +196,7 @@ jobs:
       - name: clean
         # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
         run: |
-          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
+          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-7.2/source/*
 
 
   release:

@@ -149,7 +149,7 @@ jobs:
 
       - name: Make LKMs
         run: |
-          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
+          sudo chroot build_env/ds.${{ matrix.platform }}-7.2 << "EOF"
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
           while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
           mkdir -p /source/output

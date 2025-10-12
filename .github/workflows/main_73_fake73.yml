@@ -96,7 +96,7 @@ jobs:
           # if version == 6.2, checkout 6.2.4
           git checkout DSM$VERSION`[ "$VERSION" = "6.2" ] && echo ".4"`
           sudo ./EnvDeploy -v $VERSION`[ "$VERSION" = "6.2" ] && echo ".4"` -l  # Get Available platforms
-sudo ./EnvDeploy -q -v 7.2 -p $PLATFORM
+          sudo ./EnvDeploy -q -v 7.2 -p $PLATFORM
 
           # Fault tolerance of pkgscripts-ng
           if [[ "$PLATFORM" == "broadwellntbap" && "$VERSION" == "7.1" ]]; then
@@ -106,12 +106,12 @@ sudo ./EnvDeploy -q -v 7.2 -p $PLATFORM
           #ENV
           mkdir -p ${ROOT_PATH}/source
 
-ENV_PATH=${ROOT_PATH}/build_env/ds.$PLATFORM-7.2
+          ENV_PATH=${ROOT_PATH}/build_env/ds.$PLATFORM-7.2
           sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
-echo "VERSION=7.3" | sudo tee -a ${ENV_PATH}/env64.mak
-echo "DSM_VER=7.3" | sudo tee -a ${ENV_PATH}/env64.mak
-echo "VERSION=7.3" | sudo tee -a ${ENV_PATH}/env32.mak
-echo "DSM_VER=7.3" | sudo tee -a ${ENV_PATH}/env32.mak
+          echo "VERSION=7.3" | sudo tee -a ${ENV_PATH}/env64.mak
+          echo "DSM_VER=7.3" | sudo tee -a ${ENV_PATH}/env64.mak
+          echo "VERSION=7.3" | sudo tee -a ${ENV_PATH}/env32.mak
+          echo "DSM_VER=7.3" | sudo tee -a ${ENV_PATH}/env32.mak
 
           sudo chroot ${ENV_PATH} << "EOF"
           cd pkgscripts

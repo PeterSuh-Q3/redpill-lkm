@@ -31,9 +31,6 @@ jobs:
             platform: apollolake
             parm: 'prod-v7'
           - version: 7.3
-            platform: braswell
-            parm: 'prod-v7'
-          - version: 7.3
             platform: broadwell
             parm: 'prod-v7'
           - version: 7.3
@@ -48,9 +45,6 @@ jobs:
           - version: 7.3
             platform: denverton
             parm: 'prod-v7'
-          - version: 7.3
-            platform: epyc7002
-            parm: 'prod-v7'
           - version: 7.3 
             platform: geminilake
             parm: 'prod-v7'
@@ -62,6 +56,9 @@ jobs:
             parm: 'prod-v7'
           - version: 7.3
             platform: v1000
+            parm: 'prod-v7'
+          - version: 7.3
+            platform: epyc7002
             parm: 'prod-v7'
           - version: 7.3
             platform: v1000nk

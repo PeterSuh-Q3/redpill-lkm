@@ -167,7 +167,7 @@ jobs:
               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
               gzip redpill.ko
               if [ "${{ matrix.platform }}" = "epyc7002" ]; then
-                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-7.2-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
               else
                 mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
               fi
@@ -186,8 +186,9 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms-${{ matrix.platform }}-${{ matrix.version }}
-          path: ${{ github.workspace }}/source/output/*
+          name: rp-lkms
+          path: |
+            ${{ github.workspace }}/source/output/*
           if-no-files-found: warn
           compression-level: 6
           overwrite: false

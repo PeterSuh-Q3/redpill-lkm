@@ -8,8 +8,8 @@
 name: Build lkms 7.3 mshell
 
 on:  
-  release:
-    types: [published]
+  #release:
+    #types: [published]
 
   workflow_dispatch:
     inputs:

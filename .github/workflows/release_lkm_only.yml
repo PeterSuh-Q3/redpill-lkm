@@ -14,26 +14,26 @@ on:
         description: "format %y.%-m.$i"
         required: false
         type: string
-      target1:
-        description: "rp-r1000nk-7.3-5.10.55-prod.ko.gz"
-        required: true
-        type: string
-        default: "rp-r1000nk-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
-      target2:
-        description: "rp-geminilakenk-7.3-5.10.55-prod.ko.gz"
-        required: true
-        type: string
-        default: "rp-geminilakenk-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
-      target3:
-        description: "rp-v1000nk-7.3-5.10.55-prod.ko.gz"
-        required: true
-        type: string
-        default: "rp-v1000nk-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
-      target4:
-        description: "rp-epyc7002-7.3-5.10.55-prod.ko.gz"
-        required: true
-        type: string
-        default: "rp-epyc7002-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
+      #target1:
+      #  description: "rp-r1000nk-7.3-5.10.55-prod.ko.gz"
+      #  required: true
+      #  type: string
+      #  default: "rp-r1000nk-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
+      #target2:
+      #  description: "rp-geminilakenk-7.3-5.10.55-prod.ko.gz"
+      #  required: true
+      #  type: string
+      #  default: "rp-geminilakenk-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
+      #target3:
+      #  description: "rp-v1000nk-7.3-5.10.55-prod.ko.gz"
+      #  required: true
+      #  type: string
+      #  default: "rp-v1000nk-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
+      #target4:
+      #  description: "rp-epyc7002-7.3-5.10.55-prod.ko.gz"
+      #  required: true
+      #  type: string
+      #  default: "rp-epyc7002-7.3-5.10.55-prod.ko.gz"  # 기본값 설정
       prerelease:
         description: "pre release"
         default: false  # 기본값 설정
@@ -92,14 +92,11 @@ jobs:
           ls -lR
           
           echo "## Target files verification:"
-          file ${{ inputs.target1 }} ${{ inputs.target2 }} ${{ inputs.target3 }} ${{ inputs.target4 }} ${{ inputs.target5 }} VERSION
+          #file ${{ inputs.target1 }} ${{ inputs.target2 }} ${{ inputs.target3 }} ${{ inputs.target4 }} ${{ inputs.target5 }} VERSION
           
           echo "## Creating ZIP..."
           zip -v -9 rp-lkms.zip -j \
-            "${{ inputs.target1 }}" \
-            "${{ inputs.target2 }}" \
-            "${{ inputs.target3 }}" \
-            "${{ inputs.target4 }}" \
+            "6.2.4/*.gz" \
             VERSION
 
       - name: Release

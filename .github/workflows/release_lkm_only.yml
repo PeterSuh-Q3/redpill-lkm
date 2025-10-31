@@ -95,7 +95,7 @@ jobs:
           #file ${{ inputs.target1 }} ${{ inputs.target2 }} ${{ inputs.target3 }} ${{ inputs.target4 }} ${{ inputs.target5 }} VERSION
           
           echo "## Creating ZIP..."
-          zip -v -9 rp-lkms.zip -j \
+          zip -j -9 rp-lkms.zip \
             "./6.2.4/*.gz" \
             VERSION
 

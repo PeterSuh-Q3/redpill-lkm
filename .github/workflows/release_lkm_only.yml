@@ -96,7 +96,7 @@ jobs:
           
           echo "## Creating ZIP..."
           zip -v -9 rp-lkms.zip -j \
-            "6.2.4/*.gz" \
+            "./6.2.4/*.gz" \
             VERSION
 
       - name: Release

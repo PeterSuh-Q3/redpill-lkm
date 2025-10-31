@@ -95,7 +95,8 @@ jobs:
           #file ${{ inputs.target1 }} ${{ inputs.target2 }} ${{ inputs.target3 }} ${{ inputs.target4 }} ${{ inputs.target5 }} VERSION
           
           echo "## Creating ZIP..."
-          find ./6.2.4 -type f -name '*.gz' -exec zip -j -9 rp-lkms.zip {} + VERSION
+          find ./6.2.4 -type f -name '*.gz' | xargs zip -j -9 rp-lkms.zip
+          zip -j rp-lkms.zip VERSION
 
       - name: Release
         uses: softprops/action-gh-release@v1

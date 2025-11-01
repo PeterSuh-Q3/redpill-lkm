@@ -14,8 +14,8 @@ WORK_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 function makeEnvDeploy() {
   ROOT_PATH=$(realpath "${1:-${WORK_PATH}}")
-  VERSION=${2:-"7.2"}
-  PLATFORM=${3:-"epyc7002"}
+  VERSION=${2:-"6.2"}
+  PLATFORM=${3:-"apollolake"}
 
   mkdir -p "${ROOT_PATH}"
   if [ ! -d "${ROOT_PATH}/pkgscripts-ng" ]; then

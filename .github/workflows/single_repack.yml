@@ -34,8 +34,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1
-            platform: avoton
+          - version: 6.2
+            platform: apollolake
             parm: 'prod-v7'
           #- version: 7.1
           #  platform: cedarview
@@ -214,10 +214,10 @@ jobs:
            echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
            zip -9 rp-lkms.zip -j rp-lkms/*
  
-       - name: Release
-         uses: softprops/action-gh-release@v1
-         if: env.VERSION != ''
-         with:
-           tag_name: ${{ env.VERSION }}
-           prerelease: ${{ inputs.prerelease }}
-           files: rp-lkms.zip
+#       - name: Release
+#         uses: softprops/action-gh-release@v1
+#         if: env.VERSION != ''
+#         with:
+#           tag_name: ${{ env.VERSION }}
+#           prerelease: ${{ inputs.prerelease }}
+#           files: rp-lkms.zip

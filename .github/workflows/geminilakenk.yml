@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms single geminilakenk
+name: Build lkms single apollolake 6.2
 
 on:  
   workflow_dispatch:
@@ -24,9 +24,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.2
-            platform: geminilakenk
-            parm: 'prod-v7'            
+          - version: 6.2
+            platform: apollolake
+            parm: 'prod-v6'
 
     runs-on: ubuntu-latest
 

@@ -3,31 +3,32 @@
 #include "rtc_proxy.h"
 #include "bios_hwmon_shim.h"
 #include "../../common.h"
-#include "../../internal/helper/symbol_helper.h"     //kernel_has_symbol()
-#include "../../internal/override/override_symbol.h" //shimming leds stuff
-#include <linux/pci.h>  // pci_get_device(), pci_reset_function()
+#include "../../internal/helper/symbol_helper.h"
+#include "../../internal/override/override_symbol.h"
+#include <linux/pci.h>
+#include <linux/delay.h>  // ✅ msleep() 헤더
 
 /********************************************* mfgBIOS LKM static shims ***********************************************/
+static unsigned long *vtable_start = NULL;  // ✅ 전역 변수 선언 추가
 static unsigned long org_shimmed_entries[VTK_SIZE] = {'\0'};
 static unsigned long cust_shimmed_entries[VTK_SIZE] = {'\0'};
 static bool vtable_printed = false;
 
-/********************************************* Null shim indices (중복 제거) ********************************************/
+// ✅ bios_null_zero_int 함수 정의 추가
+static int bios_null_zero_int(void)
+{
+    return 0;
+}
+
+/********************************************* Null shim indices *****************************************************/
 static const int null_shim_indices[] = {
-    VTK_SET_FAN_STATE,
-    VTK_SET_DISK_LED,
-    VTK_SET_PWR_LED,
-    VTK_SET_GPIO_PIN_BLINK,
-    VTK_SET_ALR_LED,
-    VTK_SET_BUZ_CLR,
-    VTK_SET_CPU_FAN_STATUS,
-    VTK_SET_PHY_LED,
-    VTK_SET_HDD_ACT_LED,
-    VTK_GET_MICROP_ID,
-    VTK_SET_MICROP_ID
+    VTK_SET_FAN_STATE, VTK_SET_DISK_LED, VTK_SET_PWR_LED,
+    VTK_SET_GPIO_PIN_BLINK, VTK_SET_ALR_LED, VTK_SET_BUZ_CLR,
+    VTK_SET_CPU_FAN_STATUS, VTK_SET_PHY_LED, VTK_SET_HDD_ACT_LED,
+    VTK_GET_MICROP_ID, VTK_SET_MICROP_ID
 };
 
-/********************************************* Custom shims (개별 구현 필요) ********************************************/
+/********************************************* Custom shims *********************************************************/
 static int bios_get_power_status(POWER_INFO *power)
 {
     power->power_1 = POWER_STATUS_GOOD;
@@ -43,10 +44,7 @@ static int shim_get_gpio_pin_usable(int *pin)
 
 static int shim_set_gpio_pin_usable(int *pin)
 {
-    pr_loc_dbg("set_gpio pin info 0  %d", pin[0]);
-    pr_loc_dbg("set_gpio pin info 1  %d", pin[1]);
-    pr_loc_dbg("set_gpio pin info 2  %d", pin[2]);
-    pr_loc_dbg("set_gpio pin info 3  %d", pin[3]);
+    pr_loc_dbg("set_gpio pin info 0-3: %d %d %d %d", pin[0], pin[1], pin[2], pin[3]);
     return 0;
 }
 
@@ -56,7 +54,7 @@ static int bios_get_buz_clr(unsigned char *state)
     return 0;
 }
 
-/********************************************* Debug helpers (수정됨) **************************************************/
+/********************************************* Debug helpers ********************************************************/
 static void print_debug_symbols(const unsigned long *vtable_end)
 {
     if (unlikely(!vtable_start)) {
@@ -70,7 +68,6 @@ static void print_debug_symbols(const unsigned long *vtable_end)
     unsigned long *call_ptr = vtable_start;
     unsigned char *byte_ptr = (unsigned char *)vtable_start;
     for (int i = 0; i < im; i += 8, byte_ptr += 8, call_ptr++) {
-        // ✅ 버그 수정: 올바른 바이트 오프셋 접근
         pr_loc_dbg_raw("%02x %02x %02x %02x %02x %02x %02x %02x ",
             byte_ptr[0], byte_ptr[1], byte_ptr[2], byte_ptr[3],
             byte_ptr[4], byte_ptr[5], byte_ptr[6], byte_ptr[7]);
@@ -88,7 +85,7 @@ static void print_vtable_once(const unsigned long *vt_end)
     }
 }
 
-/********************************************** mfgBIOS shimming routines *********************************************/
+/********************************************** mfgBIOS shimming routines ********************************************/
 void _shim_bios_module_entry(const unsigned int idx, const void *new_sym_ptr)
 {
     if (unlikely(!vtable_start)) {
@@ -111,32 +108,32 @@ void _shim_bios_module_entry(const unsigned int idx, const void *new_sym_ptr)
     vtable_start[idx] = cust_shimmed_entries[idx];
 }
 
-// ✅ PCI 리셋 헬퍼 함수
+/********************************************** PCI/NIC stabilization (TCRP fix) *************************************/
 static void ensure_nic_ready(const struct hw_config *hw)
 {
     pr_loc_info("TCRP BIOS shim: stabilizing boot environment...");
     
-    // 1. 기본 3초 대기 (mfgBIOS 안정화)
+    // 무조건 3초 대기 (하드웨어 탐지 무관)
     msleep(3000);
     
-    // 2. Intel NIC 있으면 리셋
+    // Intel NIC 있으면 추가 리셋
     struct pci_dev *dev = pci_get_device(PCI_VENDOR_ID_INTEL, PCI_ANY_ID, NULL);
     if (dev && (dev->class >> 8) == PCI_CLASS_NETWORK_ETHERNET) {
-        pr_loc_info("Resetting Intel NIC %s", pci_name(dev));
+        pr_loc_info("Resetting Intel NIC %s (%04x:%04x)", pci_name(dev),
+                   dev->vendor, dev->device);
         pci_reset_function(dev);
         msleep(1500);
         pci_dev_put(dev);
     } else {
-        pr_loc_dbg("No Intel NIC - delay only");
+        pr_loc_dbg("No Intel NIC found - delay only");
     }
     
     pr_loc_info("NIC environment ready - proceeding with shims");
 }
 
-/**
- * Main shimming function - 최적화됨
- */
-bool shim_bios_module(const struct hw_config *hw, struct module *mod, unsigned long *vt_start, unsigned long *vt_end)
+/********************************************** Main shimming function ***********************************************/
+bool shim_bios_module(const struct hw_config *hw, struct module *mod, 
+                     unsigned long *vt_start, unsigned long *vt_end)
 {
     // PCI 리셋 + 지연 (한 번만)
     static bool nic_initialized = false;
@@ -150,21 +147,21 @@ bool shim_bios_module(const struct hw_config *hw, struct module *mod, unsigned l
         return false;
     }
 
-    vtable_start = vt_start;
-    print_vtable_once(vt_end);  // ✅ 1회만 출력
+    vtable_start = vt_start;  // ✅ 로컬 → 전역 할당
+    print_vtable_once(vt_end);
 
-    // ✅ 1. Null shims 일괄 처리 (매크로 중복 제거)
+    // 1. Null shims 일괄 처리
     for (int i = 0; i < ARRAY_SIZE(null_shim_indices); i++) {
-        _shim_bios_module_entry(null_shim_indices[i], bios_null_zero_int);
+        _shim_bios_module_entry(null_shim_indices[i], bios_null_zero_int);  // ✅ 함수 정의됨
     }
 
-    // ✅ 2. Custom shims (개별)
+    // 2. Custom shims
     _shim_bios_module_entry(VTK_GET_GPIO_PIN, shim_get_gpio_pin_usable);
     _shim_bios_module_entry(VTK_SET_GPIO_PIN, shim_set_gpio_pin_usable);
     _shim_bios_module_entry(VTK_GET_BUZ_CLR, bios_get_buz_clr);
     _shim_bios_module_entry(VTK_GET_PWR_STATUS, bios_get_power_status);
 
-    // ✅ 3. RTC proxy (조건부)
+    // 3. RTC proxy
     if (hw->emulate_rtc) {
         pr_loc_dbg("Platform requires RTC proxy - enabling");
         register_rtc_proxy_shim();
@@ -182,12 +179,14 @@ bool shim_bios_module(const struct hw_config *hw, struct module *mod, unsigned l
 
 bool unshim_bios_module(unsigned long *vt_start, unsigned long *vt_end)
 {
+    vtable_start = vt_start;  // ✅ 로컬 → 전역 할당
+    
     for (int i = 0; i < VTK_SIZE; i++) {
         if (!cust_shimmed_entries[i])
             continue;
 
         pr_loc_dbg("Restoring vtable [%d] from %ps<%p> to %ps<%p>", i, 
-                   (void *)vt_start[i], (void *)vt_start[i], 
+                   (void *)vtable_start[i], (void *)vtable_start[i], 
                    (void *)org_shimmed_entries[i], (void *)org_shimmed_entries[i]);
         vtable_start[i] = org_shimmed_entries[i];
     }
@@ -200,12 +199,12 @@ void reset_bios_shims(void)
 {
     memset(org_shimmed_entries, 0, sizeof(org_shimmed_entries));
     memset(cust_shimmed_entries, 0, sizeof(cust_shimmed_entries));
-    vtable_printed = false;  // ✅ 리셋 추가
+    vtable_printed = false;
     unregister_rtc_proxy_shim();
     reset_bios_module_hwmon_shim();
 }
 
-/********************************************* Disk LED shims (배열화) *************************************************/
+/********************************************* Disk LED shims (배열 수정) ********************************************/
 #if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
 static override_symbol_inst *ov_funcSYNOSATADiskLedCtrl = NULL;
 #endif
@@ -233,8 +232,8 @@ static int syno_ahci_disk_led_enable_by_port_shim(const unsigned short port, con
     return 0;
 }
 
-// ✅ 배열로 중복 제거
-static override_symbol_inst *disk_led_shims[] = {
+// ✅ 포인터 타입 수정
+static override_symbol_inst **disk_led_shims[] = {
 #if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
     &ov_funcSYNOSATADiskLedCtrl,
 #endif
@@ -287,17 +286,15 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
     return 0;
 }
 
-// ✅ unshim 로직 배열화 (중복 제거)
 int unshim_disk_leds_ctrl(void)
 {
     pr_loc_dbg("Unshimming disk led control API");
     int failed = 0;
 
     for (int i = 0; disk_led_shims[i]; i++) {
-        override_symbol_inst **shim = disk_led_shims[i];
-        if (*shim) {
-            int out = restore_symbol(*shim);
-            *shim = NULL;
+        if (*disk_led_shims[i]) {  // ✅ 타입 수정
+            int out = restore_symbol(*disk_led_shims[i]);
+            *disk_led_shims[i] = NULL;
             if (out != 0) {
                 pr_loc_err("Failed to unshim disk_led_shim[%d], error=%d", i, out);
                 failed = -EINVAL;

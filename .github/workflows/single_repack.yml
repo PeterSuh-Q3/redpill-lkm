@@ -34,9 +34,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 6.2
+          - version: 7.2
             platform: apollolake
-            parm: 'prod-v6'
+            parm: 'prod-v7'
+          - version: 7.2
+            platform: broadwellnk
+            parm: 'prod-v7'
           #- version: 7.1
           #  platform: cedarview
           #  parm: 'prod-v7'

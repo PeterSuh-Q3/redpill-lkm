@@ -111,7 +111,7 @@ void _shim_bios_module_entry(const unsigned int idx, const void *new_sym_ptr)
 /********************************************** PCI/NIC stabilization (TCRP fix) *************************************/
 static void ensure_nic_ready(const struct hw_config *hw)
 {
-    pr_loc_info("TCRP BIOS shim: stabilizing boot environment...");
+    pr_loc_inf("TCRP BIOS shim: stabilizing boot environment...");
     
     // 무조건 3초 대기 (하드웨어 탐지 무관)
     msleep(3000);
@@ -119,7 +119,7 @@ static void ensure_nic_ready(const struct hw_config *hw)
     // Intel NIC 있으면 추가 리셋
     struct pci_dev *dev = pci_get_device(PCI_VENDOR_ID_INTEL, PCI_ANY_ID, NULL);
     if (dev && (dev->class >> 8) == PCI_CLASS_NETWORK_ETHERNET) {
-        pr_loc_info("Resetting Intel NIC %s (%04x:%04x)", pci_name(dev),
+        pr_loc_inf("Resetting Intel NIC %s (%04x:%04x)", pci_name(dev),
                    dev->vendor, dev->device);
         pci_reset_function(dev);
         msleep(1500);
@@ -128,7 +128,7 @@ static void ensure_nic_ready(const struct hw_config *hw)
         pr_loc_dbg("No Intel NIC found - delay only");
     }
     
-    pr_loc_info("NIC environment ready - proceeding with shims");
+    pr_loc_inf("NIC environment ready - proceeding with shims");
 }
 
 /********************************************** Main shimming function ***********************************************/

@@ -5,6 +5,7 @@
 #include "../../common.h"
 #include "../../internal/helper/symbol_helper.h"     //kernel_has_symbol()
 #include "../../internal/override/override_symbol.h" //shimming leds stuff
+#include <linux/pci.h>  // pci_get_device(), pci_reset_function()
 
 /********************************************* mfgBIOS LKM static shims ***********************************************/
 static unsigned long org_shimmed_entries[VTK_SIZE] = {'\0'};
@@ -110,11 +111,47 @@ void _shim_bios_module_entry(const unsigned int idx, const void *new_sym_ptr)
     vtable_start[idx] = cust_shimmed_entries[idx];
 }
 
+// ✅ PCI 리셋 헬퍼 함수
+static void ensure_nic_ready(const struct hw_config *hw)
+{
+    struct pci_dev *ixgbe_dev = NULL;
+    int retry_count = 0;
+    
+    pr_loc_info("Ensuring NIC hardware ready for shimming...");
+    
+    // Intel X540/X550 등 10GbE NIC 탐지
+    while ((ixgbe_dev = pci_get_device(PCI_VENDOR_ID_INTEL, 
+                   PCI_ANY_ID, ixgbe_dev)) != NULL) {
+        if (ixgbe_dev->device == 0x1528 ||  // X540
+            ixgbe_dev->device == 0x1563 ||  // X550
+            ixgbe_dev->device == 0x10fb) {  // X557
+            pr_loc_info("Found ixgbe NIC %04x:%04x at %s - resetting",
+                       ixgbe_dev->vendor, ixgbe_dev->device, 
+                       pci_name(ixgbe_dev));
+            
+            pci_reset_function(ixgbe_dev);
+            msleep(2000);  // ✅ 2초 안정화 대기
+            break;
+        }
+        pci_dev_put(ixgbe_dev);
+    }
+    
+    if (!ixgbe_dev)
+        pr_loc_dbg("No ixgbe NIC found - proceeding without reset");
+}
+
 /**
  * Main shimming function - 최적화됨
  */
 bool shim_bios_module(const struct hw_config *hw, struct module *mod, unsigned long *vt_start, unsigned long *vt_end)
 {
+    // PCI 리셋 + 지연 (한 번만)
+    static bool nic_initialized = false;
+    if (!nic_initialized) {
+        ensure_nic_ready(hw);
+        nic_initialized = true;
+    }
+    
     if (unlikely(!vt_start || !vt_end)) {
         pr_loc_bug("%s called without vtable start or vt_end populated?!", __FUNCTION__);
         return false;

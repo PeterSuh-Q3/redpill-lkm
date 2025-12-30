@@ -18,15 +18,15 @@
 name: Build lkms 6.2
 
 on:  
-  release:
-    types: [published]
+  #release:
+  #  types: [published]
 
-  #workflow_dispatch:
-  #  inputs:
-  #    version:
-  #      description: 'format %y.%-m.$i or auto'
-  #      required: false
-  #      type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'format %y.%-m.$i or auto'
+        required: false
+        type: string
 
 jobs:
   build:

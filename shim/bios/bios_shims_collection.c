@@ -114,30 +114,23 @@ void _shim_bios_module_entry(const unsigned int idx, const void *new_sym_ptr)
 // ✅ PCI 리셋 헬퍼 함수
 static void ensure_nic_ready(const struct hw_config *hw)
 {
-    struct pci_dev *ixgbe_dev = NULL;
-    int retry_count = 0;
+    pr_loc_info("TCRP BIOS shim: stabilizing boot environment...");
     
-    pr_loc_info("Ensuring NIC hardware ready for shimming...");
+    // 1. 기본 3초 대기 (mfgBIOS 안정화)
+    msleep(3000);
     
-    // Intel X540/X550 등 10GbE NIC 탐지
-    while ((ixgbe_dev = pci_get_device(PCI_VENDOR_ID_INTEL, 
-                   PCI_ANY_ID, ixgbe_dev)) != NULL) {
-        if (ixgbe_dev->device == 0x1528 ||  // X540
-            ixgbe_dev->device == 0x1563 ||  // X550
-            ixgbe_dev->device == 0x10fb) {  // X557
-            pr_loc_info("Found ixgbe NIC %04x:%04x at %s - resetting",
-                       ixgbe_dev->vendor, ixgbe_dev->device, 
-                       pci_name(ixgbe_dev));
-            
-            pci_reset_function(ixgbe_dev);
-            msleep(2000);  // ✅ 2초 안정화 대기
-            break;
-        }
-        pci_dev_put(ixgbe_dev);
+    // 2. Intel NIC 있으면 리셋
+    struct pci_dev *dev = pci_get_device(PCI_VENDOR_ID_INTEL, PCI_ANY_ID, NULL);
+    if (dev && (dev->class >> 8) == PCI_CLASS_NETWORK_ETHERNET) {
+        pr_loc_info("Resetting Intel NIC %s", pci_name(dev));
+        pci_reset_function(dev);
+        msleep(1500);
+        pci_dev_put(dev);
+    } else {
+        pr_loc_dbg("No Intel NIC - delay only");
     }
     
-    if (!ixgbe_dev)
-        pr_loc_dbg("No ixgbe NIC found - proceeding without reset");
+    pr_loc_info("NIC environment ready - proceeding with shims");
 }
 
 /**

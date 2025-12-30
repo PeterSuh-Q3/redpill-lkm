@@ -183,9 +183,6 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone "Asia/Seoul"
-
-      - name: Check output directory files
-        run: ls -al ${{ github.workspace }}/source/output/
   
       - name: Download from Artifacts
         uses: actions/download-artifact@v4

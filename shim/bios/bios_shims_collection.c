@@ -6,6 +6,8 @@
 #include "../../internal/helper/symbol_helper.h"     //kernel_has_symbol()
 #include "../../internal/override/override_symbol.h" //shimming leds stuff
 
+struct ata_port;
+
 #define DECLARE_NULL_ZERO_INT(for_what)                         \
     static __used int bios_##for_what##_null_zero_int(void)     \
     {                                                           \
@@ -318,7 +320,7 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
         {
             out = PTR_ERR(ov_SYNO_CHECK_HDD_DETECT);
             ov_SYNO_CHECK_HDD_DETECT = NULL;
-            pr_loc_warn("Failed to hook SYNO_CHECK_HDD_DETECT, error=%d", out);
+            pr_loc_dbg("Failed to hook SYNO_CHECK_HDD_DETECT, error=%d", out);
         }
     }
 

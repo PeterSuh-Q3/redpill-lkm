@@ -321,6 +321,7 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
             out = PTR_ERR(ov_SYNO_CHECK_HDD_DETECT);
             ov_SYNO_CHECK_HDD_DETECT = NULL;
             pr_loc_dbg("Failed to hook SYNO_CHECK_HDD_DETECT, error=%d", out);
+            return out;            
         }
     }
 

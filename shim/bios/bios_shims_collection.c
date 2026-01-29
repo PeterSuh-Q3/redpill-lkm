@@ -6,8 +6,6 @@
 #include "../../internal/helper/symbol_helper.h"     //kernel_has_symbol()
 #include "../../internal/override/override_symbol.h" //shimming leds stuff
 
-struct ata_port;
-
 #define DECLARE_NULL_ZERO_INT(for_what)                         \
     static __used int bios_##for_what##_null_zero_int(void)     \
     {                                                           \
@@ -220,9 +218,6 @@ static override_symbol_inst *ov_funcSYNOSATADiskLedCtrl = NULL;
 static override_symbol_inst *ov_syno_ahci_disk_led_enable = NULL;
 static override_symbol_inst *ov_syno_ahci_disk_led_enable_by_port = NULL;
 
-// Braswell HDD GPIO NULL pointer panic fix
-static override_symbol_inst *ov_SYNO_CHECK_HDD_DETECT = NULL;
-
 #if !defined(CONFIG_SYNO_EPYC7002) && !defined(CONFIG_SYNO_PURLEY)
 /******************************** Kernel-level shims related to mfgBIOS functionality *********************************/
 extern void *funcSYNOSATADiskLedCtrl; // if this explodes one day we need to do kernel_has_symbol() on it dynamically
@@ -244,21 +239,6 @@ int syno_ahci_disk_led_enable_shim(const unsigned short host_num, const int valu
 int syno_ahci_disk_led_enable_by_port_shim(const unsigned short port, const int value)
 {
     pr_loc_dbg("Received %s with port=%d val=%d", __FUNCTION__, port, value);
-    return 0;
-}
-
-/**
- * Safe wrapper for SYNO_CHECK_HDD_DETECT
- * Prevents NULL pointer dereference kernel panic
- */
-static int syno_check_hdd_detect_shim(struct ata_port *ap) {
-    if (!ap) {
-        pr_loc_dbg("SYNO_CHECK_HDD_DETECT: NULL ata_port");
-        return 0;
-    }
-    
-    // GPIO not ready - safely defer
-    pr_loc_dbg("SYNO_CHECK_HDD_DETECT: GPIO not ready, deferring");
     return 0;
 }
 
@@ -311,20 +291,6 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
         }
     }
 
-    // Hook SYNO_CHECK_HDD_DETECT
-    if (kernel_has_symbol("SYNO_CHECK_HDD_DETECT"))
-    {
-        pr_loc_dbg("Hooking SYNO_CHECK_HDD_DETECT for Braswell GPIO safety");
-        ov_SYNO_CHECK_HDD_DETECT = override_symbol("SYNO_CHECK_HDD_DETECT", syno_check_hdd_detect_shim);
-        if (unlikely(IS_ERR(ov_SYNO_CHECK_HDD_DETECT)))
-        {
-            out = PTR_ERR(ov_SYNO_CHECK_HDD_DETECT);
-            ov_SYNO_CHECK_HDD_DETECT = NULL;
-            pr_loc_dbg("Failed to hook SYNO_CHECK_HDD_DETECT, error=%d", out);
-            return out;            
-        }
-    }
-
     pr_loc_dbg("Finished %s", __FUNCTION__);
     return 0;
 }
@@ -371,19 +337,6 @@ int unshim_disk_leds_ctrl(void)
         }
     }
 
-    // Unshim SYNO_CHECK_HDD_DETECT
-    if (ov_SYNO_CHECK_HDD_DETECT)
-    {
-        pr_loc_dbg("Unshimming SYNO_CHECK_HDD_DETECT");
-        out = restore_symbol(ov_SYNO_CHECK_HDD_DETECT);
-        ov_SYNO_CHECK_HDD_DETECT = NULL;
-        if (unlikely(out != 0))
-        {
-            pr_loc_err("Failed to unshim SYNO_CHECK_HDD_DETECT, error=%d", out);
-            failed = true;
-        }
-    }
-    
     out = failed ? -EINVAL : 0;
     pr_loc_dbg("Finished %s (exit=%d)", __FUNCTION__, out);
 

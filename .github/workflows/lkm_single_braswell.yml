@@ -30,9 +30,9 @@ jobs:
           #- version: 7.2
           #  platform: grantley
           #  parm: 'prod-v7'
-          - version: 6.2
-            platform: braswell
-            parm: 'prod-v6'
+          #- version: 6.2
+          #  platform: braswell
+          #  parm: 'prod-v6'
           - version: 7.2
             platform: braswell
             parm: 'prod-v7'

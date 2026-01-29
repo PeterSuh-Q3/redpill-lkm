@@ -33,7 +33,7 @@ jobs:
           - version: 6.2
             platform: braswell
             parm: 'prod-v6'
-          - version: 7.1
+          - version: 7.2
             platform: braswell
             parm: 'prod-v7'
 

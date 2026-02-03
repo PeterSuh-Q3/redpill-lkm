@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms 7.3 mshell
+name: Build lkms 7.3 epyc7002
 
 on:  
   #release:

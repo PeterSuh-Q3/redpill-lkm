@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms 7.3 epyc7002
+name: Build lkms 7.3 Kernel 5
 
 on:  
   #release:
@@ -30,7 +30,16 @@ jobs:
           - version: 7.3
             platform: epyc7002
             parm: 'prod-v7'
-
+          - version: 7.3
+            platform: v1000nk
+            parm: 'prod-v7'
+          - version: 7.3
+            platform: r1000nk
+            parm: 'prod-v7'
+          - version: 7.3
+            platform: geminilakenk
+            parm: 'prod-v7'     
+            
     runs-on: ubuntu-latest
 
     steps:

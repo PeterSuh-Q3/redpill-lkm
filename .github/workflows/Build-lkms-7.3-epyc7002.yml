@@ -149,9 +149,12 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms
-          path: |
-            ${{ github.workspace }}/source/output/*
+          # 플랫폼 이름으로 아티팩트를 동적으로 구별
+          name: rp-${{ matrix.platform }}-${{ github.run_id }}-${{ github.job }}
+          path: /source/output/rp-*.ko.gz        
+          #name: rp-lkms
+          #path: |
+          #  ${{ github.workspace }}/source/output/*
 
       - name: clean
         # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
@@ -183,8 +186,11 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms
-          path: ./rp-lkms
+            # 업로드와 동일한 이름으로 아티팩트 다운로드
+          name: rp-${{ matrix.platform }}-${{ github.run_id }}-${{ github.job }}
+          path: ./downloaded-${{ matrix.platform }}
+          #name: rp-lkms
+          #path: ./rp-lkms
 
       - name: Calculate Version
         run: |

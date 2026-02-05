@@ -48,9 +48,9 @@ jobs:
           - version: 7.3
             platform: denverton
             parm: 'prod-v7'
-          - version: 7.3
-            platform: epyc7002
-            parm: 'prod-v7'
+          #- version: 7.3
+          #  platform: epyc7002
+          #  parm: 'prod-v7'
           - version: 7.3 
             platform: geminilake
             parm: 'prod-v7'
@@ -63,15 +63,15 @@ jobs:
           - version: 7.3
             platform: v1000
             parm: 'prod-v7'
-          - version: 7.3
-            platform: v1000nk
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: r1000nk
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: geminilakenk
-            parm: 'prod-v7'            
+          #- version: 7.3
+          #  platform: v1000nk
+          #  parm: 'prod-v7'
+          #- version: 7.3
+          #  platform: r1000nk
+          #  parm: 'prod-v7'
+          #- version: 7.3
+          #  platform: geminilakenk
+          #  parm: 'prod-v7'            
 
     runs-on: ubuntu-latest
 
@@ -182,7 +182,7 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-${{ matrix.platform }}
           path: |
             ${{ github.workspace }}/source/output/*
 
@@ -216,8 +216,8 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms
-          path: ./rp-lkms
+          name: rp-${{ matrix.platform }}
+          path: ./rp-${{ matrix.platform }}        
 
       - name: Calculate Version
         run: |

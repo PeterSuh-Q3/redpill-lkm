@@ -159,22 +159,36 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-bromolow-${{ github.run_id }}
+          # 아티팩트 이름에 matrix.version을 추가하여 충돌 방지
+          name: rp-${{ matrix.platform }}-${{ matrix.version }}-${{ github.run_id }}
+          # 절대 경로(/source/...) 대신 github.workspace 기준 올바른 경로로 수정
           path: |
-            /source/output/*
+            ${{ github.workspace }}/source/output/*
 
       - name: clean
-        # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
         run: |
           sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
 
+  # 행렬 작업(build)이 모두 끝난 뒤, 분리된 아티팩트들을 모아 압축하는 통합 Job
+  archive:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-bromolow-${{ github.run_id }}
+          # 업로드된 아티팩트들의 패턴을 지정
+          pattern: rp-bromolow-*-${{ github.run_id }}
+          # 개별적으로 업로드된 파일들을 모두 하나의 디렉토리(./rp-lkms)로 병합
+          merge-multiple: true
           path: ./rp-lkms
 
       - name: Zip Lkms
-        if: env.VERSION != ''
         run: |
           zip -9 rp-lkms.zip -j rp-lkms/*
+          
+      - name: Upload Final Zip Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rp-lkms-final-${{ github.run_id }}
+          path: rp-lkms.zip

@@ -27,9 +27,9 @@ jobs:
           - version: 6.2
             platform: bromolow
             parm: 'prod-v6'
-          - version: 7.0
-            platform: bromolow
-            parm: 'prod-v7'
+          #- version: 7.0
+          #  platform: bromolow
+          #  parm: 'prod-v7'
           - version: 7.1
             platform: bromolow
             parm: 'prod-v7'

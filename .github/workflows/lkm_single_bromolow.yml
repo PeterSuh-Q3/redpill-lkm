@@ -67,7 +67,7 @@ jobs:
 
           # Fault tolerance of pkgscripts-ng
           if [[ "$PLATFORM" == "broadwellntbap" && "$VERSION" == "7.1" ]]; then
-            sed -i '/		broadwellnk	BROADWELLNK/a\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ROOT_PATH}/pkgscripts-ng/include/platforms
+            sed -i '/		broadwellnk	BROADWELLNK/a\\		broadwellntbap  BROADWELLNTBAP                  linux-4.4.x             Intel Broadwell with ntb kernel config in AP mode' ${ROOT_PATH}/pkgscripts-ng/include/platforms
           fi
 
           #ENV
@@ -80,7 +80,7 @@ jobs:
           cd pkgscripts
 
           version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
-          sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
+          sed -i '/PLATFORM_FAMILY/a\\\\techo "PRODUCT=$PRODUCT" >> $file\\n\\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\\n\\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
           ./SynoBuild -c -p ${{ matrix.platform }}
 
           while read -r line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
@@ -133,12 +133,16 @@ jobs:
             if [ -f redpill.ko ]; then
               strip -g redpill.ko    # Discard symbols from object files. 
               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
+              
+              # 생성할 공통 파일명 구성 (예: rp-bromolow-7.1-3.10.108-prod)
+              BASENAME="rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER}-$(echo ${a} | awk -F'-' '{print $1}')"
+              
+              # 1. .ko 원본 파일 복사
+              cp redpill.ko /source/output/${BASENAME}.ko
+              
+              # 2. .gz 파일 생성 및 이동
               gzip redpill.ko
-              if [ "${{ matrix.platform }}" = "epyc7002" ]; then
-                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
-              else
-                mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
-              fi
+              mv -f redpill.ko.gz /source/output/${BASENAME}.ko.gz
             else
               echo "error"
             fi
@@ -218,14 +222,3 @@ jobs:
         if: env.VERSION != ''
         run: |
           zip -9 rp-lkms.zip -j rp-lkms/*
-
-      #- name: Release
-      #  uses: softprops/action-gh-release@v1
-      #  if: env.VERSION != ''
-      #  with:
-      #    tag_name: ${{ env.VERSION }}
-      #    prerelease: ${{ inputs.prerelease }}
-      #    body: |
-      #      ${{ steps.Changelog.outputs.changelog }}
-      #    files: |
-      #      rp-lkms.zip

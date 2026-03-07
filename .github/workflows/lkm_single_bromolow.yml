@@ -147,11 +147,11 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
-
+    
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-bromolow-${{ github.run_id }}
           path: |
             ${{ github.workspace }}/source/output/*
 
@@ -185,7 +185,7 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms-${{ matrix.platform }}-${{ matrix.dsm_version }}        
+          name: rp-bromolow-${{ github.run_id }}
           path: ./rp-lkms
 
       - name: Calculate Version

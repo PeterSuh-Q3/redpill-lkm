@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build lkms single braswell
+name: Build lkms single bromolow
 
 on:  
   workflow_dispatch:
@@ -30,12 +30,12 @@ jobs:
           #- version: 7.2
           #  platform: grantley
           #  parm: 'prod-v7'
-          - version: 6.2
-            platform: braswell
-            parm: 'prod-v6'
-          #- version: 7.2
-          #  platform: braswell
-          #  parm: 'prod-v7'
+          - version: 7.2
+            platform: bromolow
+            parm: 'prod-v7'
+          - version: 7.3
+            platform: bromolow
+            parm: 'prod-v7'
 
     runs-on: ubuntu-latest
 

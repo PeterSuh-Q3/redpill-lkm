@@ -185,7 +185,7 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-lkms-${{ matrix.platform }}-${{ matrix.dsm_version }}        
           path: ./rp-lkms
 
       - name: Calculate Version
@@ -211,7 +211,7 @@ jobs:
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
           fi
 
-      - name: Zip Lkms-${VERSION}
+      - name: Zip Lkms
         if: env.VERSION != ''
         run: |
           zip -9 rp-lkms.zip -j rp-lkms/*

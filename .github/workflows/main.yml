@@ -228,7 +228,7 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-lkms-${{ matrix.platform }}-${{ matrix.version }}
           path: |
             ${{ github.workspace }}/source/output/*
 
@@ -262,7 +262,7 @@ jobs:
       - name: Download from Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: rp-lkms
+          name: rp-lkms-${{ matrix.platform }}-${{ matrix.version }}
           path: ./rp-lkms
 
       - name: Calculate Version

@@ -45,6 +45,7 @@ static void cmd_shim_noop(const command_definition *t, const char *data, u8 data
     pr_loc_dbg("vPMU received %s using %d bytes - NOOP", t->name, data_len);
 }
 
+// From: toolkit *.dev -- usr/local/include/hwctl/external.h
 //@todo when we get the physical PMU emulator we can move this to a separate library so that shim contacts an internal
 // routing routine for commands which aren't shimmed here. Then we will add all PMU=>kernel commands as well. Currently
 // we only define kernel=>PMU ones as these are the ones we need to listen for.

@@ -59,6 +59,23 @@ static unsigned long irq_flags = 0;                     // saved flags when IRQs
 static int camouflage_device(struct scsi_device *sdp);
 static int uncamouflage_device(struct scsi_device *sdp);
 
+// 자동 복구 콜백 반복(bus_for_each_dev 방식, 모든 주요 커널과 호환)
+#include <linux/device.h>
+extern struct bus_type scsi_bus_type;
+static int find_camouflaged_sdp_dev(struct device *dev, void *data)
+{
+    if (!is_scsi_leaf(dev))
+        return 0;
+
+    struct scsi_device *sdp = to_scsi_device(dev);
+    struct usb_device *target_fake_usbd = (struct usb_device *)data;
+    if (host_to_us(sdp->host)->pusb_dev == target_fake_usbd) {
+        camouflaged_sdp = sdp;
+        return 1; // 停止遍历
+    }
+    return 0;
+}
+
 struct ida;
 /**
  * Called by the sd_probe() very early after disk type is determined. We can restore the disk to its original shape
@@ -70,19 +87,31 @@ static int ida_X_trap(struct ida *ida, gfp_t gfp_mask)
     //  which isn't really feasible in non-preempt & IRQ-disabled state... a catch-22
     // It is also possible that it happens during uncamouflage_device - this is why we force-restore here and just call
     //  it.
+    pr_loc_dbg("[ida_X_trap] camouflaged_sdp at entry: %p", camouflaged_sdp);
     if (unlikely(!camouflaged_sdp))
     {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
-        pr_loc_bug("Hit ida_pr_get() trap without sdp saved - removing trap and calling original");
-        restore_symbol(ida_X_ovs);
-        return _ida_pre_get(ida, gfp_mask);
+        pr_loc_bug("Hit ida_pr_get() trap without sdp saved - attempting auto-recovery");
 #else
-        pr_loc_bug("Hit ida_alloc_range() trap without sdp saved - removing trap and calling original");
-        restore_symbol(ida_X_ovs);
-        return _ida_alloc_range(ida, 0, ~0, gfp_mask);
+        pr_loc_bug("Hit ida_alloc_range() trap without sdp saved - attempting auto-recovery");
 #endif
+        pr_loc_bug("[ida_X_trap] ida: %p gfp_mask: %lx", ida, (unsigned long)gfp_mask);
+        pr_loc_bug("[ida_X_trap] ida_X_ovs: %p", ida_X_ovs);
+        camouflaged_sdp = NULL;
+        bus_for_each_dev(&scsi_bus_type, NULL, fake_usbd, find_camouflaged_sdp_dev);
+        if (camouflaged_sdp) {
+            pr_loc_bug("[ida_X_trap] Auto-recovered camouflaged_sdp: %p", camouflaged_sdp);
+            // 继续uncamouflage流程
+        } else {
+            pr_loc_bug("[ida_X_trap] Auto-recovery failed, fallback to original logic");
+            restore_symbol(ida_X_ovs);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
+            return _ida_pre_get(ida, gfp_mask);
+#else
+            return _ida_alloc_range(ida, 0, ~0, gfp_mask);
+#endif
+        }
     }
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
     pr_loc_dbg("Hit ida_pre_get() trap! Removing camouflage...");
 #else
@@ -124,6 +153,7 @@ static int camouflage_device(struct scsi_device *sdp)
     //  duration of probing. If we got here again before camouflaging it means there's a device floating around which
     //  is a SATA device but with broken USB descriptors. This should never ever happen as it may lead to data loss and
     //  crashes at best.
+    pr_loc_dbg("[camouflage_device] camouflaged_sdp at entry: %p", camouflaged_sdp);
     if (unlikely(camouflaged_sdp))
     {
         pr_loc_crt("Attempting to camouflage when another device is undergoing camouflage");
@@ -205,6 +235,7 @@ static int uncamouflage_device(struct scsi_device *sdp)
 {
     int out = 0;
     pr_loc_dbg("Uncamouflaging SATA disk vendor=\"%s\" model=\"%s\"", sdp->vendor, sdp->model);
+    pr_loc_dbg("[uncamouflage_device] camouflaged_sdp at entry: %p", camouflaged_sdp);
 
     if (unlikely(host_to_us(sdp->host)->pusb_dev != fake_usbd))
     {
@@ -277,6 +308,7 @@ static int scsi_disk_probe_handler(struct notifier_block *self, unsigned long st
     switch (state)
     {
     case SCSI_EVT_DEV_PROBING:
+        pr_loc_dbg("[scsi_disk_probe_handler] SCSI_EVT_DEV_PROBING camouflaged_sdp: %p", camouflaged_sdp);
         if (unlikely(camouflaged_sdp))
         {
             pr_loc_bug("Got device probe when other one is camouflaged - surprise reschedule happened?");
@@ -291,6 +323,7 @@ static int scsi_disk_probe_handler(struct notifier_block *self, unsigned long st
 
     case SCSI_EVT_DEV_PROBED_OK:
     case SCSI_EVT_DEV_PROBED_ERR:
+        pr_loc_dbg("[scsi_disk_probe_handler] SCSI_EVT_DEV_PROBED camouflaged_sdp: %p", camouflaged_sdp);
         if (is_camouflaged(sdp))
         { // camouflage is expected to be removed by the ida_pre_get() trap
             pr_loc_bug("Probing finished but device is still camouflages - something went terribly wrong");

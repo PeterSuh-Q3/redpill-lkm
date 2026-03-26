@@ -262,12 +262,11 @@ jobs:
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone "Asia/Seoul"
 
-      - name: Download from Artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v5
         with:
-          name: rp-lkms-${{ matrix.platform }}-${{ matrix.version }}
           path: ./rp-lkms
-
+    
       - name: Calculate Version
         run: |
           # Calculate Version

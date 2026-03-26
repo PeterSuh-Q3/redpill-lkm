@@ -7,6 +7,9 @@
 
 name: Build lkms 7.1, 7.2 mshell
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  
 on:  
   release:
     types: [published]

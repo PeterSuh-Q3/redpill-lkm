@@ -68,6 +68,7 @@ jobs:
           for PLATFORM in ${{ matrix.platforms }}; do
             echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}, target=${RP_TARGET}, ver=${RP_TARGET_VER}) ==="
             mkdir -p "/tmp/${PLATFORM}-${VERSION}"
+            chmod 777 "/tmp/${PLATFORM}-${VERSION}"
 
             docker run --privileged --rm -t \
               -e RP_MODULE_TARGET="${RP_TARGET}" \

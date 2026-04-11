@@ -76,8 +76,6 @@ jobs:
           PLATFORM=${{ matrix.platform }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
-
-          DIR=${VERSION}
           
           mkdir -p "/tmp/${PLATFORM}-${VERSION}"
 

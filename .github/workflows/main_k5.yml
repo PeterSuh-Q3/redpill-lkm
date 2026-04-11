@@ -31,14 +31,17 @@ jobs:
           #- version: 7.1
           #  platforms: 'epyc7002'
           #  parm: 'prod-v7'
+          #  kernel_ver: '5.10.55'
 
           #- version: 7.2
           #  platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
           #  parm: 'prod-v7'
+          #  kernel_ver: '5.10.55'
 
           - version: 7.3
             platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
             parm: 'prod-v7'
+            kernel_ver: '5.10.55'
 
     runs-on: ubuntu-latest
 
@@ -75,12 +78,15 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
+          KERNEL_VER=${{ matrix.kernel_ver }}
           PARM="${{ matrix.parm }}"
           RP_TARGET="${PARM%%-*}"
           RP_TARGET_VER="${PARM##*v}"
 
+          mkdir -p "${ROOT_PATH}/source/output"
+
           for PLATFORM in ${{ matrix.platforms }}; do
-            echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}, target=${RP_TARGET}, ver=${RP_TARGET_VER}) ==="
+            echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}, kernel ${KERNEL_VER}, target=${RP_TARGET}) ==="
             mkdir -p "/tmp/${PLATFORM}-${VERSION}"
             chmod 777 "/tmp/${PLATFORM}-${VERSION}"
 
@@ -91,15 +97,12 @@ jobs:
               -v "/tmp/${PLATFORM}-${VERSION}":/output \
               dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
 
-            for M in $(ls /tmp/${PLATFORM}-${VERSION}); do
-              PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${VERSION}"
-              mkdir -p "${ROOT_PATH}/source/output/${PLATFORM_DIR}"
-              if [ -f ~/src/pats/modules/${PLATFORM}/$M ]; then
-                cp ~/src/pats/modules/${PLATFORM}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
-              else
-                cp /tmp/${PLATFORM}-${VERSION}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
-              fi
-            done
+            KO_NAME="rp-${PLATFORM}-${VERSION}-${KERNEL_VER}-${RP_TARGET}.ko"
+            if [ -f /tmp/${PLATFORM}-${VERSION}/redpill.ko ]; then
+              cp /tmp/${PLATFORM}-${VERSION}/redpill.ko "${ROOT_PATH}/source/output/${KO_NAME}"
+              gzip -9 "${ROOT_PATH}/source/output/${KO_NAME}"
+              echo "Created: ${KO_NAME}.gz"
+            fi
 
             rm -rf /tmp/${PLATFORM}-${VERSION}
           done
@@ -109,7 +112,7 @@ jobs:
         with:
           name: rp-lkms-${{ matrix.version }}
           path: |
-            ${{ github.workspace }}/source/output/**/*
+            ${{ github.workspace }}/source/output/*.ko.gz
 
       - name: Clean
         run: |
@@ -167,13 +170,10 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          mkdir -p /tmp/zip-staging
-          find rp-lkms -type f -name "*.ko" | while read f; do
-            DIR_NAME="$(basename "$(dirname "$f")")"
-            cp "$f" "/tmp/zip-staging/rp-${DIR_NAME}.ko"
-          done
-          cp rp-lkms/VERSION /tmp/zip-staging/ 2>/dev/null || true
-          cd /tmp/zip-staging && zip -9 "${GITHUB_WORKSPACE}/rp-lkms.zip" *
+          find rp-lkms -name "*.ko.gz" -exec cp {} . \;
+          cp rp-lkms/VERSION . 2>/dev/null || true
+          ls -la *.ko.gz
+          zip -9 rp-lkms.zip *.ko.gz VERSION
 
       - name: Release
         uses: softprops/action-gh-release@v1

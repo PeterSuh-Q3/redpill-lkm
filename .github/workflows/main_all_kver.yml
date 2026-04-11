@@ -47,7 +47,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.0
+          - version: '7.0'
             parm: 'prod-v7'
             platform_kernels: >-
               apollolake:4.4.180 avoton:3.10.108 braswell:3.10.108
@@ -56,7 +56,7 @@ jobs:
               geminilake:4.4.180 purley:4.4.180 
               v1000:4.4.180 cedarview:3.10.108
         
-          - version: 7.1
+          - version: '7.1'
             parm: 'prod-v7'
             platform_kernels: >-
               apollolake:4.4.180 avoton:3.10.108 braswell:3.10.108
@@ -65,7 +65,7 @@ jobs:
               geminilake:4.4.180 purley:4.4.180 r1000:4.4.180
               v1000:4.4.180 epyc7002:5.10.55 cedarview:3.10.108
 
-          - version: 7.2
+          - version: '7.2'
             parm: 'prod-v7'
             platform_kernels: >-
               apollolake:4.4.302 avoton:3.10.108 braswell:3.10.108
@@ -75,7 +75,7 @@ jobs:
               v1000:4.4.302 epyc7002:5.10.55 geminilakenk:5.10.55
               r1000nk:5.10.55 v1000nk:5.10.55
 
-          - version: 7.3
+          - version: '7.3'
             parm: 'prod-v7'
             platform_kernels: >-
               apollolake:4.4.302 avoton:3.10.108 braswell:3.10.108

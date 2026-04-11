@@ -147,11 +147,12 @@ jobs:
           if [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
           else
+            TODAY="$(date +'%y.%-m.%-d')"
             LATEST_TAG="$(curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null)"
-            if [[ -n "${LATEST_TAG}" && "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m.%-d'`" ]]; then
-              VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
+            if [[ -n "${LATEST_TAG}" && "${LATEST_TAG}" = "${TODAY}" ]]; then
+              VERSION="${TODAY}.1"
             else
-              VERSION="`date +'%y.%-m.%-d'`"
+              VERSION="${TODAY}"
             fi
           fi
 
@@ -166,7 +167,13 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          zip -9 -r -j rp-lkms.zip rp-lkms/
+          mkdir -p /tmp/zip-staging
+          find rp-lkms -type f -name "*.ko" | while read f; do
+            DIR_NAME="$(basename "$(dirname "$f")")"
+            cp "$f" "/tmp/zip-staging/rp-${DIR_NAME}.ko"
+          done
+          cp rp-lkms/VERSION /tmp/zip-staging/ 2>/dev/null || true
+          cd /tmp/zip-staging && zip -9 "${GITHUB_WORKSPACE}/rp-lkms.zip" *
 
       - name: Release
         uses: softprops/action-gh-release@v1

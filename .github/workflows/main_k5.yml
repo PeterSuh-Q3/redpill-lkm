@@ -78,9 +78,6 @@ jobs:
           TOOLKIT_VER=${VERSION}
           DIR=${VERSION}
           
-          # 소스 디렉토리가 없으면 스킵
-          [ ! -d "${ROOT_PATH}/${DIR}" ] && echo "No source dir ${DIR}, skipping." && exit 0
-
           mkdir -p "/tmp/${PLATFORM}-${VERSION}"
 
           # dante90/syno-compiler 도커 이미지로 모듈 컴파일

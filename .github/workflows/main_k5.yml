@@ -61,12 +61,17 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
+          PARM="${{ matrix.parm }}"
+          RP_TARGET="${PARM%%-*}"
+          RP_TARGET_VER="${PARM##*v}"
 
           for PLATFORM in ${{ matrix.platforms }}; do
-            echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}) ==="
+            echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}, target=${RP_TARGET}, ver=${RP_TARGET_VER}) ==="
             mkdir -p "/tmp/${PLATFORM}-${VERSION}"
 
             docker run --privileged --rm -t \
+              -e RP_MODULE_TARGET="${RP_TARGET}" \
+              -e RP_MODULE_TARGET_VER="${RP_TARGET_VER}" \
               -v "${ROOT_PATH}":/input \
               -v "/tmp/${PLATFORM}-${VERSION}":/output \
               dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}

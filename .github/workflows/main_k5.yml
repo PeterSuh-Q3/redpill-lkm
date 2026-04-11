@@ -85,7 +85,7 @@ jobs:
           PLATFORM=${{ matrix.platform }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${{ matrix.toolkit_ver }}
-          DIR="${VERSION:0:1}.x"
+          DIR="${VERSION}"
 
           # 소스 디렉토리가 없으면 스킵
           [ ! -d "${ROOT_PATH}/${DIR}" ] && echo "No source dir ${DIR}, skipping." && exit 0

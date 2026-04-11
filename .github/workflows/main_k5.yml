@@ -31,41 +31,32 @@ jobs:
           - version: 7.1
             platform: epyc7002
             parm: 'prod-v7'
-            toolkit_ver: '7.1'
 
           - version: 7.2
             platform: epyc7002
             parm: 'prod-v7'
-            toolkit_ver: '7.2'
           - version: 7.2
             platform: v1000nk
             parm: 'prod-v7'
-            toolkit_ver: '7.2'
           - version: 7.2
             platform: r1000nk
             parm: 'prod-v7'
-            toolkit_ver: '7.2'
           - version: 7.2
             platform: geminilakenk
             parm: 'prod-v7'
-            toolkit_ver: '7.2'
 
           - version: 7.3
             platform: epyc7002
             parm: 'prod-v7'
-            toolkit_ver: '7.3'
           - version: 7.3
             platform: v1000nk
             parm: 'prod-v7'
-            toolkit_ver: '7.3'
           - version: 7.3
             platform: r1000nk
             parm: 'prod-v7'
-            toolkit_ver: '7.3'
           - version: 7.3
             platform: geminilakenk
             parm: 'prod-v7'
-            toolkit_ver: '7.3'
 
     runs-on: ubuntu-latest
 
@@ -84,9 +75,8 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           PLATFORM=${{ matrix.platform }}
           VERSION=${{ matrix.version }}
-          TOOLKIT_VER=${{ matrix.toolkit_ver }}
-          DIR="${VERSION}"
-
+          TOOLKIT_VER=${VERSION}
+          
           # 소스 디렉토리가 없으면 스킵
           [ ! -d "${ROOT_PATH}/${DIR}" ] && echo "No source dir ${DIR}, skipping." && exit 0
 
@@ -94,6 +84,7 @@ jobs:
 
           # dante90/syno-compiler 도커 이미지로 모듈 컴파일
           docker run --privileged -u $(id -u) --rm -t \
+            -v "${ROOT_PATH}":/input \          # ← DIR 없이 루트 직접 마운트
             -v "${ROOT_PATH}/${DIR}":/input \
             -v "/tmp/${PLATFORM}-${VERSION}":/output \
             dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}

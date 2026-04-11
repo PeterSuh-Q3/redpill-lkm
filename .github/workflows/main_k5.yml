@@ -28,13 +28,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1
-            platforms: 'epyc7002'
-            parm: 'prod-v7'
+          #- version: 7.1
+          #  platforms: 'epyc7002'
+          #  parm: 'prod-v7'
 
-          - version: 7.2
-            platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
-            parm: 'prod-v7'
+          #- version: 7.2
+          #  platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
+          #  parm: 'prod-v7'
 
           - version: 7.3
             platforms: 'epyc7002 v1000nk r1000nk geminilakenk'

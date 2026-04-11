@@ -76,29 +76,20 @@ jobs:
           PLATFORM=${{ matrix.platform }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
-          DIR=${VERSION}
-          
-          # 소스 디렉토리가 없으면 스킵
-          [ ! -d "${ROOT_PATH}/${DIR}" ] && echo "No source dir ${DIR}, skipping." && exit 0
 
           mkdir -p "/tmp/${PLATFORM}-${VERSION}"
 
-          # dante90/syno-compiler 도커 이미지로 모듈 컴파일
           docker run --privileged -u $(id -u) --rm -t \
-            -v "${ROOT_PATH}":/input \          # ← DIR 없이 루트 직접 마운트
-            -v "${ROOT_PATH}/${DIR}":/input \
+            -v "${ROOT_PATH}":/input \
             -v "/tmp/${PLATFORM}-${VERSION}":/output \
             dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
 
-          # 컴파일 결과물 정리: pats 원본 모듈 우선, 없으면 컴파일본 사용
           for M in $(ls /tmp/${PLATFORM}-${VERSION}); do
             PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${VERSION}"
             mkdir -p "${ROOT_PATH}/source/output/${PLATFORM_DIR}"
             if [ -f ~/src/pats/modules/${PLATFORM}/$M ]; then
-              # original
               cp ~/src/pats/modules/${PLATFORM}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
             else
-              # compiled
               cp /tmp/${PLATFORM}-${VERSION}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
             fi
           done
@@ -159,6 +150,7 @@ jobs:
           if [ -n "${VERSION}" ]; then
             echo "Version: ${VERSION}"
             echo "${VERSION}" >VERSION
+            mkdir -p "./rp-lkms"
             echo "${VERSION}" >"./rp-lkms/VERSION"
             echo "VERSION=${VERSION}" >> $GITHUB_ENV
           fi
@@ -166,7 +158,7 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          zip -9 rp-lkms.zip -j rp-lkms/*
+          zip -9 -r -j rp-lkms.zip rp-lkms/
 
       - name: Release
         uses: softprops/action-gh-release@v1

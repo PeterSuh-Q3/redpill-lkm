@@ -14,6 +14,25 @@ on:
 
   workflow_dispatch:
     inputs:
+      delay_minutes:
+        description: "Delay before build starts (minutes)"
+        required: false
+        default: '0'
+        type: choice
+        options:
+          - '0'
+          - '10'
+          - '20'
+          - '30'
+          - '40'
+          - '50'
+          - '60'
+          - '70'
+          - '80'
+          - '90'
+          - '100'
+          - '110'
+          - '120'
       version:
         description: "format %y.%-m.$i or auto"
         required: false
@@ -69,6 +88,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Scheduled Delay
+        if: inputs.delay_minutes != '0' && inputs.delay_minutes != ''
+        run: |
+          DELAY="${{ inputs.delay_minutes }}"
+          echo "Waiting ${DELAY} minutes before starting build..."
+          END_TIME=$(date -d "+${DELAY} minutes" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || date -v+${DELAY}M '+%Y-%m-%d %H:%M:%S %Z')
+          echo "Build will start at: ${END_TIME}"
+          sleep $((DELAY * 60))
+          echo "Delay complete. Starting build now."
+
       - name: Checkout
         uses: actions/checkout@v5
 

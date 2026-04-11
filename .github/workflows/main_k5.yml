@@ -29,33 +29,15 @@ jobs:
       matrix:
         include:
           - version: 7.1
-            platform: epyc7002
+            platforms: 'epyc7002'
             parm: 'prod-v7'
 
           - version: 7.2
-            platform: epyc7002
-            parm: 'prod-v7'
-          - version: 7.2
-            platform: v1000nk
-            parm: 'prod-v7'
-          - version: 7.2
-            platform: r1000nk
-            parm: 'prod-v7'
-          - version: 7.2
-            platform: geminilakenk
+            platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
             parm: 'prod-v7'
 
           - version: 7.3
-            platform: epyc7002
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: v1000nk
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: r1000nk
-            parm: 'prod-v7'
-          - version: 7.3
-            platform: geminilakenk
+            platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
             parm: 'prod-v7'
 
     runs-on: ubuntu-latest
@@ -70,38 +52,42 @@ jobs:
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone "Asia/Seoul"
 
+      - name: Pull Docker Image
+        run: |
+          docker pull dante90/syno-compiler:${{ matrix.version }}
+
       - name: Compile LKMs via Docker (dante90/syno-compiler)
         run: |
           ROOT_PATH=${{ github.workspace }}
-          PLATFORM=${{ matrix.platform }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
 
-          DIR=${VERSION}
-          
-          mkdir -p "/tmp/${PLATFORM}-${VERSION}"
+          for PLATFORM in ${{ matrix.platforms }}; do
+            echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}) ==="
+            mkdir -p "/tmp/${PLATFORM}-${VERSION}"
 
-          docker run --privileged -u $(id -u) --rm -t \
-            -v "${ROOT_PATH}":/input \
-            -v "/tmp/${PLATFORM}-${VERSION}":/output \
-            dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
+            docker run --privileged --rm -t \
+              -v "${ROOT_PATH}":/input \
+              -v "/tmp/${PLATFORM}-${VERSION}":/output \
+              dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
 
-          for M in $(ls /tmp/${PLATFORM}-${VERSION}); do
-            PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${VERSION}"
-            mkdir -p "${ROOT_PATH}/source/output/${PLATFORM_DIR}"
-            if [ -f ~/src/pats/modules/${PLATFORM}/$M ]; then
-              cp ~/src/pats/modules/${PLATFORM}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
-            else
-              cp /tmp/${PLATFORM}-${VERSION}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
-            fi
+            for M in $(ls /tmp/${PLATFORM}-${VERSION}); do
+              PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${VERSION}"
+              mkdir -p "${ROOT_PATH}/source/output/${PLATFORM_DIR}"
+              if [ -f ~/src/pats/modules/${PLATFORM}/$M ]; then
+                cp ~/src/pats/modules/${PLATFORM}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
+              else
+                cp /tmp/${PLATFORM}-${VERSION}/$M "${ROOT_PATH}/source/output/${PLATFORM_DIR}/"
+              fi
+            done
+
+            rm -rf /tmp/${PLATFORM}-${VERSION}
           done
-
-          rm -rf /tmp/${PLATFORM}-${VERSION}
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: rp-lkms-${{ matrix.platform }}-${{ matrix.version }}
+          name: rp-lkms-${{ matrix.version }}
           path: |
             ${{ github.workspace }}/source/output/**/*
 

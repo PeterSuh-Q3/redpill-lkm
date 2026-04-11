@@ -3,7 +3,7 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 
-name: Build lkms 6.2, 7.1, 7.2, 7.3 mshell
+name: Build lkms mshell with toolchain dockerhub
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

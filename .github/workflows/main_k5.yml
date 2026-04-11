@@ -28,20 +28,34 @@ jobs:
     strategy:
       matrix:
         include:
-          #- version: 7.1
-          #  platforms: 'epyc7002'
-          #  parm: 'prod-v7'
-          #  kernel_ver: '5.10.55'
+          - version: 7.1
+            parm: 'prod-v7'
+            platform_kernels: >-
+              apollolake:4.4.180 avoton:3.10.108 braswell:3.10.108
+              broadwell:4.4.180 broadwellnk:4.4.180 broadwellnkv2:4.4.180
+              broadwellntbap:4.4.180 bromolow:3.10.108 denverton:4.4.180
+              geminilake:4.4.180 purley:4.4.180 r1000:4.4.180
+              v1000:4.4.180 epyc7002:5.10.55
 
-          #- version: 7.2
-          #  platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
-          #  parm: 'prod-v7'
-          #  kernel_ver: '5.10.55'
+          - version: 7.2
+            parm: 'prod-v7'
+            platform_kernels: >-
+              apollolake:4.4.302 avoton:3.10.108 braswell:3.10.108
+              broadwell:4.4.302 broadwellnk:4.4.302 broadwellnkv2:4.4.302
+              broadwellntbap:4.4.302 bromolow:3.10.108 denverton:4.4.302
+              geminilake:4.4.302 purley:4.4.302 r1000:4.4.302
+              v1000:4.4.302 epyc7002:5.10.55 geminilakenk:5.10.55
+              r1000nk:5.10.55 v1000nk:5.10.55
 
           - version: 7.3
-            platforms: 'epyc7002 v1000nk r1000nk geminilakenk'
             parm: 'prod-v7'
-            kernel_ver: '5.10.55'
+            platform_kernels: >-
+              apollolake:4.4.302 avoton:3.10.108 braswell:3.10.108
+              broadwell:4.4.302 broadwellnk:4.4.302 broadwellnkv2:4.4.302
+              broadwellntbap:4.4.302 bromolow:3.10.108 denverton:4.4.302
+              geminilake:4.4.302 purley:4.4.302 r1000:4.4.302
+              v1000:4.4.302 epyc7002:5.10.55 geminilakenk:5.10.55
+              r1000nk:5.10.55 v1000nk:5.10.55
 
     runs-on: ubuntu-latest
 
@@ -78,14 +92,16 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
-          KERNEL_VER=${{ matrix.kernel_ver }}
           PARM="${{ matrix.parm }}"
           RP_TARGET="${PARM%%-*}"
           RP_TARGET_VER="${PARM##*v}"
 
           mkdir -p "${ROOT_PATH}/source/output"
 
-          for PLATFORM in ${{ matrix.platforms }}; do
+          for ENTRY in ${{ matrix.platform_kernels }}; do
+            PLATFORM="${ENTRY%%:*}"
+            KERNEL_VER="${ENTRY##*:}"
+
             echo "=== Compiling for ${PLATFORM} (DSM ${VERSION}, kernel ${KERNEL_VER}, target=${RP_TARGET}) ==="
             mkdir -p "/tmp/${PLATFORM}-${VERSION}"
             chmod 777 "/tmp/${PLATFORM}-${VERSION}"

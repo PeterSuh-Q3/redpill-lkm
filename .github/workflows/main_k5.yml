@@ -77,6 +77,8 @@ jobs:
           VERSION=${{ matrix.version }}
           TOOLKIT_VER=${VERSION}
 
+          DIR=${VERSION}
+          
           mkdir -p "/tmp/${PLATFORM}-${VERSION}"
 
           docker run --privileged -u $(id -u) --rm -t \

@@ -52,9 +52,23 @@ jobs:
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone "Asia/Seoul"
 
-      - name: Pull Docker Image
+      - name: Cache Docker Image
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/docker-image-${{ matrix.version }}.tar
+          key: docker-syno-compiler-${{ matrix.version }}
+
+      - name: Load or Pull Docker Image
         run: |
-          docker pull dante90/syno-compiler:${{ matrix.version }}
+          if [ -f /tmp/docker-image-${{ matrix.version }}.tar ]; then
+            echo "Loading cached image..."
+            docker load < /tmp/docker-image-${{ matrix.version }}.tar
+          else
+            echo "Pulling image from registry..."
+            docker pull dante90/syno-compiler:${{ matrix.version }}
+            docker save dante90/syno-compiler:${{ matrix.version }} > /tmp/docker-image-${{ matrix.version }}.tar
+          fi
 
       - name: Compile LKMs via Docker (dante90/syno-compiler)
         run: |

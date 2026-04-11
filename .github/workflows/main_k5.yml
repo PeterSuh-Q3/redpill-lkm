@@ -170,10 +170,11 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          find rp-lkms -name "*.ko.gz" -exec cp {} . \;
-          cp rp-lkms/VERSION . 2>/dev/null || true
-          ls -la *.ko.gz
-          zip -9 rp-lkms.zip *.ko.gz VERSION
+          mkdir -p /tmp/zip-staging
+          find rp-lkms -name "*.ko.gz" -exec cp {} /tmp/zip-staging/ \;
+          cp rp-lkms/VERSION /tmp/zip-staging/ 2>/dev/null || true
+          ls -la /tmp/zip-staging/
+          cd /tmp/zip-staging && zip -9 "${GITHUB_WORKSPACE}/rp-lkms.zip" *
 
       - name: Release
         uses: softprops/action-gh-release@v1

@@ -33,6 +33,14 @@ on:
           - '100'
           - '110'
           - '120'
+      use_cache:
+        description: "Docker image cache 사용 여부"
+        required: false
+        default: 'enabled'
+        type: choice
+        options:
+          - 'enabled'
+          - 'disabled'
       version:
         description: "format %y.%-m.$i or auto"
         required: false
@@ -53,9 +61,9 @@ jobs:
               apollolake:4.4.180 avoton:3.10.108 braswell:3.10.108
               broadwell:4.4.180 broadwellnk:4.4.180
               broadwellntbap:4.4.180 bromolow:3.10.108 denverton:4.4.180
-              geminilake:4.4.180 purley:4.4.180 
+              geminilake:4.4.180 purley:4.4.180
               v1000:4.4.180 cedarview:3.10.108
-        
+
           - version: '7.1'
             parm: 'prod-v7'
             platform_kernels: >-
@@ -109,6 +117,7 @@ jobs:
 
       - name: Cache Docker Image
         id: docker-cache
+        if: inputs.use_cache != 'disabled'
         uses: actions/cache@v4
         with:
           path: /tmp/docker-image-${{ matrix.version }}.tar
@@ -116,13 +125,22 @@ jobs:
 
       - name: Load or Pull Docker Image
         run: |
-          if [ -f /tmp/docker-image-${{ matrix.version }}.tar ]; then
+          USE_CACHE="${{ inputs.use_cache }}"
+          CACHE_HIT="${{ steps.docker-cache.outputs.cache-hit }}"
+
+          if [ "${USE_CACHE}" != 'disabled' ] && [ "${CACHE_HIT}" = 'true' ] && [ -f /tmp/docker-image-${{ matrix.version }}.tar ]; then
             echo "Loading cached image..."
             docker load < /tmp/docker-image-${{ matrix.version }}.tar
           else
-            echo "Pulling image from registry..."
+            if [ "${USE_CACHE}" = 'disabled' ]; then
+              echo "Cache disabled — pulling fresh image from registry..."
+            else
+              echo "Cache miss — pulling image from registry..."
+            fi
             docker pull dante90/syno-compiler:${{ matrix.version }}
-            docker save dante90/syno-compiler:${{ matrix.version }} > /tmp/docker-image-${{ matrix.version }}.tar
+            if [ "${USE_CACHE}" != 'disabled' ]; then
+              docker save dante90/syno-compiler:${{ matrix.version }} > /tmp/docker-image-${{ matrix.version }}.tar
+            fi
           fi
 
       - name: Compile LKMs via Docker (dante90/syno-compiler)

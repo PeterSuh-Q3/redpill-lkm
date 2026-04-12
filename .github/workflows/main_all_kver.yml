@@ -170,10 +170,20 @@ jobs:
               dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
 
             KO_NAME="rp-${PLATFORM}-${VERSION}-${KERNEL_VER}-${RP_TARGET}.ko"
+
             if [ -f /tmp/${PLATFORM}-${VERSION}/redpill.ko ]; then
+              # 1. 기본 네이밍 파일 복사 및 압축
               cp /tmp/${PLATFORM}-${VERSION}/redpill.ko "${ROOT_PATH}/source/output/${KO_NAME}"
               gzip -9 "${ROOT_PATH}/source/output/${KO_NAME}"
               echo "Created: ${KO_NAME}.gz"
+            
+              # 2. DSM VERSION 가 "7.3"인 경우 별도 네이밍으로 추가 파일 생성 및 압축
+              if [ "${VERSION}" = "7.3" ]; then
+                KO_NAME_ALT="rp-${PLATFORM}-${KERNEL_VER}-${RP_TARGET}.ko"
+                cp /tmp/${PLATFORM}-${VERSION}/redpill.ko "${ROOT_PATH}/source/output/${KO_NAME_ALT}"
+                gzip -9 "${ROOT_PATH}/source/output/${KO_NAME_ALT}"
+                echo "Created: ${KO_NAME_ALT}.gz"
+              fi
             fi
 
             rm -rf /tmp/${PLATFORM}-${VERSION}

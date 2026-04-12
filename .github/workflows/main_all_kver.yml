@@ -242,11 +242,17 @@ jobs:
       - name: Zip Lkms
         if: env.VERSION != ''
         run: |
-          mkdir -p /tmp/zip-staging
-          find rp-lkms -name "*.ko.gz" -exec cp {} /tmp/zip-staging/ \;
-          cp rp-lkms/VERSION /tmp/zip-staging/ 2>/dev/null || true
-          ls -la /tmp/zip-staging/
-          cd /tmp/zip-staging && zip -9 "${GITHUB_WORKSPACE}/rp-lkms.zip" *
+          mkdir -p /tmp/rp-lkms-dist
+
+          # 기존: 빌드 결과물(rp-lkms/) 스테이징
+          find rp-lkms -name "*.ko.gz" -exec cp {} /tmp/rp-lkms-dist/ \;
+          cp rp-lkms/VERSION /tmp/rp-lkms-dist/ 2>/dev/null || true
+
+          # 추가: 워크스페이스의 6.2.4/*.gz 도 함께 포함
+          find "${GITHUB_WORKSPACE}/6.2.4" -name "*.gz" -exec cp {} /tmp/rp-lkms-dist/ \;
+
+          ls -la /tmp/rp-lkms-dist/
+          cd /tmp/rp-lkms-dist && zip -9 /tmp/rp-lkms-dist/rp-lkms.zip *
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -257,4 +263,4 @@ jobs:
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           files: |
-            rp-lkms.zip
+            /tmp/rp-lkms-dist/rp-lkms.zip
